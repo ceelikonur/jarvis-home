@@ -37,6 +37,17 @@ global.fetch = async (url, opts = {}) => {
   if (url.endsWith('/device/control')) {
     return mockResponse({ requestId: 'x', code: 200, msg: 'success', capability: {} });
   }
+  // Home Assistant
+  if (url.endsWith('/api/states')) {
+    return mockResponse([
+      { entity_id: 'light.salon', state: 'on', attributes: { friendly_name: 'Salon Lamba', supported_color_modes: ['rgb', 'brightness'] } },
+      { entity_id: 'switch.priz', state: 'off', attributes: { friendly_name: 'Priz' } },
+      { entity_id: 'sensor.sicaklik', state: '21', attributes: { friendly_name: 'Sıcaklık' } },
+    ]);
+  }
+  if (url.includes('/api/services/')) {
+    return mockResponse([]); // HA returns the list of changed states
+  }
   return mockResponse({ code: 404, message: 'not found' }, 404);
 };
 
@@ -115,6 +126,47 @@ async function test(name, fn) {
     assert.ok(threw, 'should throw on 401');
   });
 
+  console.log('home assistant connector');
+  process.env.HASS_URL = 'http://ha.local:8123';
+  process.env.HASS_TOKEN = 'ha-token';
+  const hass = require('../src/connectors/homeassistant');
+  await test('HA isConfigured needs URL + token', () => {
+    assert.strictEqual(hass.isConfigured(), true);
+    const saved = process.env.HASS_TOKEN; delete process.env.HASS_TOKEN;
+    assert.strictEqual(hass.isConfigured(), false);
+    process.env.HASS_TOKEN = saved;
+  });
+  await test('HA listDevices filters to light/switch + reads caps', async () => {
+    const devices = await hass.listDevices();
+    assert.strictEqual(devices.length, 2); // sensor filtered out
+    const light = devices.find((d) => d.id === 'light.salon');
+    const sw = devices.find((d) => d.id === 'switch.priz');
+    assert.deepStrictEqual(light.capabilities, ['power', 'brightness', 'color']);
+    assert.deepStrictEqual(sw.capabilities, ['power']);
+    assert.strictEqual(light.model, 'light');
+    assert.strictEqual(sw.model, 'switch');
+  });
+  await test('HA setPower routes to the entity domain', async () => {
+    await hass.setPower({ id: 'switch.priz', model: 'switch' }, true);
+    assert.ok(lastRequest.url.endsWith('/api/services/switch/turn_on'));
+    assert.strictEqual(lastRequest.body.entity_id, 'switch.priz');
+    await hass.setPower({ id: 'light.salon', model: 'light' }, false);
+    assert.ok(lastRequest.url.endsWith('/api/services/light/turn_off'));
+  });
+  await test('HA setBrightness uses brightness_pct on light.turn_on', async () => {
+    await hass.setBrightness({ id: 'light.salon', model: 'light' }, 40);
+    assert.ok(lastRequest.url.endsWith('/api/services/light/turn_on'));
+    assert.strictEqual(lastRequest.body.brightness_pct, 40);
+  });
+  await test('HA setColor uses rgb_color array', async () => {
+    await hass.setColor({ id: 'light.salon', model: 'light' }, { r: 10, g: 20, b: 30 });
+    assert.deepStrictEqual(lastRequest.body.rgb_color, [10, 20, 30]);
+  });
+  await test('HA sends Bearer auth', async () => {
+    await hass.setPower({ id: 'switch.priz', model: 'switch' }, true);
+    assert.strictEqual(lastRequest.headers.Authorization, 'Bearer ha-token');
+  });
+
   console.log('registry');
   await test('active() includes govee when configured', () => {
     const ids = registry.active().map((c) => c.id);
@@ -128,6 +180,14 @@ async function test(name, fn) {
     assert.strictEqual(resolved.id, devices[0].id);
     await registry.control(resolved, 'power', false);
     assert.strictEqual(lastRequest.body.payload.capability.value, 0);
+  });
+  await test('both connectors active → merged devices with unique keys', async () => {
+    const devices = await registry.listDevices();
+    const conns = new Set(devices.map((d) => d.connectorId));
+    assert.ok(conns.has('govee') && conns.has('homeassistant'));
+    const keys = devices.map((d) => d.key);
+    assert.strictEqual(new Set(keys).size, keys.length);
+    assert.ok(devices.length >= 3); // 1 govee + 2 HA
   });
 
   console.log('');

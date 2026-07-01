@@ -86,6 +86,11 @@ function deviceByKey(key) {
   return _deviceByKey.get(key) || null;
 }
 
+/** Devices from the most recent listDevices() call (no API hit) — for menu redraws. */
+function cachedDevices() {
+  return [..._deviceByKey.values()];
+}
+
 /** Dispatch a control action to the owning connector. */
 async function control(device, action, value) {
   const c = get(device.connectorId);
@@ -108,4 +113,4 @@ async function control(device, action, value) {
 /** Test hook — forget the cached connector list so a re-require re-scans. */
 function _reset() { _connectors = null; }
 
-module.exports = { all, active, get, listDevices, deviceByKey, control, _reset };
+module.exports = { all, active, get, listDevices, deviceByKey, cachedDevices, control, _reset };
