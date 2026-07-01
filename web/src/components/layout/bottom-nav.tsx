@@ -8,7 +8,7 @@ import { Sheet, SheetContent } from '@/components/ui/sheet'
 import {
   LayoutDashboard, List, Brain, CalendarDays, MoreHorizontal,
   FileSpreadsheet, BarChart3, PiggyBank, Tags, Settings,
-  ShoppingBag, CreditCard, CheckSquare, StickyNote, ListChecks, Timer,
+  ShoppingBag, CreditCard, CheckSquare, StickyNote, ListChecks, Timer, Lightbulb,
 } from 'lucide-react'
 
 // 4 most-used routes for thumbs (en sık erişilenler) + "Daha"
@@ -37,6 +37,7 @@ const allItems = {
     { href: '/takvim', label: 'Takvim', icon: CalendarDays },
     { href: '/notlar', label: 'Notlar', icon: StickyNote },
     { href: '/alisveris-listesi', label: 'Alışveriş', icon: ShoppingBag },
+    { href: '/cihazlar', label: 'Cihazlar', icon: Lightbulb },
   ],
   '': [
     { href: '/ayarlar', label: 'Ayarlar', icon: Settings },

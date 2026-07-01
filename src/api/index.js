@@ -8,6 +8,7 @@ const msCalendarRoutes = require('./routes/msCalendar');
 const budgetRoutes = require('./routes/budget');
 const forecastRoutes = require('./routes/forecast');
 const timeboxRoutes = require('./routes/timeboxes');
+const deviceRoutes = require('./routes/devices');
 const { webAuthMiddleware, authRouter } = require('./middleware/webAuth');
 
 function createServer() {
@@ -61,6 +62,7 @@ function createServer() {
   app.use('/api', budgetRoutes);
   app.use('/api', forecastRoutes);
   app.use('/api', timeboxRoutes);
+  app.use('/api', deviceRoutes);
 
   // Static files fallback (login page, legacy dashboard if Next.js not available)
   app.use(express.static(path.join(__dirname, 'public')));

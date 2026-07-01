@@ -10,7 +10,7 @@ import { Menu } from 'lucide-react'
 import {
   LayoutDashboard, FileSpreadsheet, List, BarChart3, PiggyBank,
   Tags, Settings, ShoppingBag, CreditCard,
-  CheckSquare, CalendarDays, StickyNote, ListChecks, Brain, Timer
+  CheckSquare, CalendarDays, StickyNote, ListChecks, Brain, Timer, Lightbulb
 } from 'lucide-react'
 
 const budgetItems = [
@@ -31,6 +31,7 @@ const jarvisItems = [
   { href: '/takvim', label: 'Takvim', icon: CalendarDays },
   { href: '/notlar', label: 'Notlar', icon: StickyNote },
   { href: '/alisveris-listesi', label: 'Alışveriş', icon: ShoppingBag },
+  { href: '/cihazlar', label: 'Cihazlar', icon: Lightbulb },
 ]
 
 const otherItems = [

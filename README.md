@@ -134,6 +134,9 @@ credentials and stores them in `.env`. Then, in the bot:
 /cihazlar        # list your devices with On/Off buttons  (aliases: /devices /isik /lamba)
 ```
 
+They're also on the **web dashboard** — the **Cihazlar** page (sidebar → Ev
+Yönetimi) shows each device as a card with On/Off, brightness and colour controls.
+
 Tap a device in `/cihazlar` to open its panel: **On/Off**, **brightness** presets
 (25–100%), and **colour** presets — only the capabilities each device reports are shown.
 
