@@ -125,11 +125,13 @@ const SYSTEM_PROMPT_CLASSIFY = `You are a message classifier for a personal assi
 - "shopping" — grocery/shopping items or lists (e.g., "süt, ekmek, yumurta", "need to buy milk and eggs", "alışveriş: domates, biber")
 - "task" — something they need to do (e.g., "raporu bitir", "finish report", "call dentist")
 - "event" — something happening at a specific time (e.g., "yarın toplantı var", "friday dinner with Ali")
+- "device" — controlling a smart-home device: lights/plugs on/off, brightness or colour (e.g., "salonu aç", "lambayı kapat", "yatak odası ışığını kırmızı yap", "ışığı %50 yap", "ampulü söndür", "turn on the living room light")
 - "note" — general information, thought, or anything else
 
 Rules:
 - Messages with "?", or starting with "ne", "neden", "nasıl", "ne zaman", "kim", "what", "why", "how", "when", "who" → question
 - Requests like "özetle", "summarize", "explain", "anlat", "söyle" → question
+- Turning a light/lamp/plug/room on/off, dimming, or changing colour → device
 - Multiple food/household items listed together → shopping
 - Single items with "al" (buy) that are clearly groceries → shopping
 - Action items with verbs like "yap", "bitir", "gönder", "finish", "send", "call" → task
@@ -138,7 +140,7 @@ Rules:
 - Return ONLY valid JSON, no markdown, no explanation
 
 Respond with exactly this JSON format:
-{"type": "question" | "shopping" | "task" | "event" | "note"}`;
+{"type": "question" | "shopping" | "task" | "event" | "device" | "note"}`;
 
 /**
  * Get current date context string for the AI
@@ -263,6 +265,23 @@ const AIService = {
   async chat(userMessage, ragContext = '') {
     try {
       const ai = getClient();
+
+      // Smart-home: expose currently-available devices so the AI can emit
+      // control_device actions. Skipped (empty) when no connector is configured.
+      let deviceSection = '';
+      try {
+        const Connectors = require('../connectors');
+        if (Connectors.active().length > 0) {
+          const devices = await Connectors.listDevices();
+          if (devices.length > 0) {
+            const list = devices
+              .map((d) => `  - "${d.name}" — controls: ${d.capabilities.join(', ')}`)
+              .join('\n');
+            deviceSection = `\n## Smart-home devices (control with control_device)\n${list}\nMatch the user's words to the closest device name above. Only emit control_device for a device that is listed. If none matches, say so in reply.\n`;
+          }
+        }
+      } catch { /* connectors optional */ }
+
       const systemPrompt = `You are J.A.R.V.I.S. — Just A Rather Very Intelligent System. Personal AI to your user, whom you address exclusively as "sir".
 
 ## Personality
@@ -288,7 +307,8 @@ Available actions:
 - {"type": "update_event", "id": <number>, "title": "...", "start_time": "YYYY-MM-DD HH:MM", "end_time": "YYYY-MM-DD HH:MM"}
 - {"type": "delete_event", "id": <number>}
 - {"type": "save_note", "content": "..."}
-
+- {"type": "control_device", "device": "<device name from the list below>", "power": true|false (optional), "brightness": <0-100> (optional), "color": "<kırmızı|yeşil|mavi|sarı|turuncu|mor|beyaz or #hex>" (optional)}
+${deviceSection}
 ## Tasks vs Lists — CRITICAL distinction
 Tasks (görevler) and Lists (listeler) are TWO SEPARATE systems with separate UI tabs. Never confuse them.
 

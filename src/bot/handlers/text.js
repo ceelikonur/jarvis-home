@@ -5,6 +5,7 @@ const ListService = require('../../services/ListService');
 const AIService = require('../../services/AIService');
 const MemoryService = require('../../services/MemoryService');
 const ActionExecutor = require('../../services/ActionExecutor');
+const Connectors = require('../../connectors');
 
 /**
  * Default text handler — AI classifies free text, then routes:
@@ -37,6 +38,12 @@ function registerTextHandler(bot) {
 
       if (type === 'event') {
         return handleEvent(ctx, content);
+      }
+
+      // Smart-home control — only when a connector is configured; otherwise
+      // fall through to the note default (no behaviour change without connectors).
+      if (type === 'device' && Connectors.active().length > 0) {
+        return handleQuestion(ctx, content);
       }
 
       if (type === 'question') {

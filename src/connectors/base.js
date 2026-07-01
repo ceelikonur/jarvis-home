@@ -71,4 +71,24 @@ function parseColor(input) {
   return null;
 }
 
-module.exports = { CAPABILITIES, clamp, envConfigured, parseColor, COLOR_WORDS };
+/**
+ * Resolve a spoken device name to a device from a list.
+ * Tries: exact (case-insensitive) → device name contains the query →
+ * query contains the device's first word ("salon" ← "Salon Lambası").
+ */
+function matchDevice(devices, query) {
+  const q = String(query || '').toLowerCase().trim();
+  if (!q || !Array.isArray(devices)) return null;
+  const names = devices.map((d) => ({ d, n: String(d.name || '').toLowerCase() }));
+  return (
+    names.find((x) => x.n === q)?.d ||
+    names.find((x) => x.n.includes(q))?.d ||
+    names.find((x) => {
+      const first = x.n.split(/[\s(]/)[0];
+      return first.length >= 3 && q.includes(first);
+    })?.d ||
+    null
+  );
+}
+
+module.exports = { CAPABILITIES, clamp, envConfigured, parseColor, COLOR_WORDS, matchDevice };

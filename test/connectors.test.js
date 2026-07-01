@@ -77,6 +77,17 @@ async function test(name, fn) {
     assert.strictEqual(base.clamp(500, 1, 100), 100);
     assert.strictEqual(base.clamp(-5, 0, 255), 0);
   });
+  await test('matchDevice resolves spoken names', () => {
+    const devices = [
+      { name: 'Salon Lambası (demo)' },
+      { name: 'Yatak Odası (demo)' },
+      { name: 'Balkon Prizi (demo)' },
+    ];
+    assert.strictEqual(base.matchDevice(devices, 'salon').name, 'Salon Lambası (demo)');
+    assert.strictEqual(base.matchDevice(devices, 'salonu').name, 'Salon Lambası (demo)'); // suffix
+    assert.strictEqual(base.matchDevice(devices, 'yatak odası').name, 'Yatak Odası (demo)');
+    assert.strictEqual(base.matchDevice(devices, 'mutfak'), null);
+  });
 
   console.log('govee connector');
   await test('isConfigured reflects env', () => {

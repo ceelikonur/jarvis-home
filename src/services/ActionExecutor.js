@@ -142,6 +142,33 @@ const ActionExecutor = {
         return `📝 Not kaydedildi.`;
       }
 
+      case 'control_device': {
+        const Connectors = require('../connectors');
+        const { parseColor, matchDevice } = require('../connectors/base');
+        let devices = Connectors.cachedDevices();
+        if (devices.length === 0) devices = await Connectors.listDevices();
+        const device = matchDevice(devices, action.device);
+        if (!device) return `⚠️ Cihaz bulunamadı: "${action.device || ''}"`;
+
+        const done = [];
+        if (action.power !== undefined && action.power !== null) {
+          await Connectors.control(device, 'power', !!action.power);
+          done.push(action.power ? 'açıldı' : 'kapatıldı');
+        }
+        if (action.brightness !== undefined && action.brightness !== null && action.brightness !== '') {
+          await Connectors.control(device, 'brightness', Number(action.brightness));
+          done.push(`parlaklık %${Number(action.brightness)}`);
+        }
+        if (action.color) {
+          const rgb = parseColor(action.color);
+          if (!rgb) return `⚠️ Renk tanınmadı: "${action.color}"`;
+          await Connectors.control(device, 'color', rgb);
+          done.push(`renk ${action.color}`);
+        }
+        if (done.length === 0) return null;
+        return `💡 ${device.name}: ${done.join(', ')}`;
+      }
+
       default:
         console.warn('Unknown action type:', action.type);
         return null;

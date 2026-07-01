@@ -137,6 +137,10 @@ credentials and stores them in `.env`. Then, in the bot:
 They're also on the **web dashboard** — the **Cihazlar** page (sidebar → Ev
 Yönetimi) shows each device as a card with On/Off, brightness and colour controls.
 
+With a local AI (Ollama) configured you can also just **type naturally** to the
+bot — "salonu aç", "yatak odası lambasını kırmızı yap", "ışığı %50 yap" — and
+JARVIS matches the device and runs it.
+
 Tap a device in `/cihazlar` to open its panel: **On/Off**, **brightness** presets
 (25–100%), and **colour** presets — only the capabilities each device reports are shown.
 
