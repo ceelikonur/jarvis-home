@@ -167,6 +167,27 @@ async function test(name, fn) {
     assert.strictEqual(lastRequest.headers.Authorization, 'Bearer ha-token');
   });
 
+  console.log('demo connector');
+  const demo = require('../src/connectors/demo');
+  await test('demo isConfigured only with DEMO_DEVICES flag', () => {
+    assert.strictEqual(demo.isConfigured(), false);
+    process.env.DEMO_DEVICES = '1';
+    assert.strictEqual(demo.isConfigured(), true);
+  });
+  await test('demo listDevices: 3 virtual devices, priz power-only', async () => {
+    const devices = await demo.listDevices();
+    assert.strictEqual(devices.length, 3);
+    const priz = devices.find((d) => d.id === 'demo-priz');
+    assert.deepStrictEqual(priz.capabilities, ['power']);
+  });
+  await test('demo setPower/setColor mutate in-memory state', async () => {
+    await demo.setPower({ id: 'demo-salon', name: 'x' }, true);
+    assert.strictEqual(demo._state['demo-salon'].power, true);
+    await demo.setColor({ id: 'demo-salon', name: 'x' }, { r: 1, g: 2, b: 3 });
+    assert.deepStrictEqual(demo._state['demo-salon'].color, { r: 1, g: 2, b: 3 });
+  });
+  delete process.env.DEMO_DEVICES; // keep demo inactive for the registry tests below
+
   console.log('registry');
   await test('active() includes govee when configured', () => {
     const ids = registry.active().map((c) => c.id);
