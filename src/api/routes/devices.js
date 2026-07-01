@@ -139,4 +139,20 @@ router.post('/devices/control', async (req, res) => {
   }
 });
 
+// GET /api/devices/snapshot?connectorId=camera&id=<host> — proxy a camera still.
+router.get('/devices/snapshot', async (req, res) => {
+  try {
+    const { connectorId, id } = req.query;
+    const c = Connectors.get(connectorId);
+    if (!c || typeof c.snapshotImage !== 'function') return res.status(404).json({ error: 'görüntü desteklenmiyor' });
+    const { buffer, contentType } = await c.snapshotImage({ connectorId, id });
+    res.set('Content-Type', contentType);
+    res.set('Cache-Control', 'no-store');
+    res.send(buffer);
+  } catch (err) {
+    console.error('[api/devices/snapshot]', err);
+    res.status(500).json({ error: String(err.message || err) });
+  }
+});
+
 module.exports = router;

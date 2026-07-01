@@ -153,9 +153,13 @@ Tap a device in `/cihazlar` to open its panel: **On/Off**, **brightness** preset
 - **tado°** — smart thermostats: set target temperature, turn heating off, resume
   the schedule. No key to paste — connect once via the *Bağla* button (OAuth
   device flow); the refresh token is stored and rotated automatically.
+- **Camera (Tapo / ONVIF)** — pan/tilt and live snapshots, fully local via ONVIF.
+  Credentials are the *camera account* set in the Tapo app (Advanced → Camera
+  Account): `CAMERA_HOST`, `CAMERA_USER`, `CAMERA_PASS`. (Privacy-mode/alarm
+  aren't in ONVIF — use Home Assistant's Tapo integration for those.)
 - **Home Assistant** — control every `light.*` / `switch.*` / `climate.*` /
-  `vacuum.*` entity in your HA install (fully local). Set `HASS_URL` and a
-  Long-Lived Access Token `HASS_TOKEN` (HA → profile → *Long-Lived Access Tokens*).
+  `vacuum.*` / `media_player.*` entity in your HA install (fully local). Set
+  `HASS_URL` and a Long-Lived Access Token `HASS_TOKEN` (HA → *Long-Lived Access Tokens*).
 
 > **Devices without a clean public API** — robot vacuums (Mova/Dreame), Amazon
 > Alexa, Tapo camera privacy mode — are best added to **Home Assistant** and

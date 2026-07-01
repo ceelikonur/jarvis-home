@@ -74,7 +74,7 @@ module.exports = {
   async listDevices() {
     const states = await api('/api/states');
     return (states || [])
-      .filter((s) => s.entity_id && /^(light|switch|climate|vacuum)\./.test(s.entity_id))
+      .filter((s) => s.entity_id && /^(light|switch|climate|vacuum|media_player)\./.test(s.entity_id))
       .map((s) => {
         const attrs = s.attributes || {};
         const domain = domainOf(s.entity_id);
@@ -86,7 +86,7 @@ module.exports = {
           const hasBrightness = hasColor || modes.includes('brightness') || modes.includes('color_temp');
           if (hasBrightness) capabilities.push(CAPABILITIES.BRIGHTNESS);
           if (hasColor) capabilities.push(CAPABILITIES.COLOR);
-        } else if (domain === 'switch') {
+        } else if (domain === 'switch' || domain === 'media_player') {
           capabilities = [CAPABILITIES.POWER];
         } else if (domain === 'climate') {
           capabilities = [CAPABILITIES.TEMPERATURE, CAPABILITIES.POWER];

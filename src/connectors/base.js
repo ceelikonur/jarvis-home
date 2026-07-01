@@ -35,6 +35,8 @@ const CAPABILITIES = {
   COLOR: 'color',            // {r,g,b}             -> setColor(device, rgb)
   TEMPERATURE: 'temperature',// target °C           -> setTemperature(device, celsius)
   VACUUM: 'vacuum',          // 'start'|'stop'|'dock' -> vacuum(device, action)
+  PTZ: 'ptz',                // 'up'|'down'|'left'|'right' -> ptz(device, direction)
+  SNAPSHOT: 'snapshot',      // still image          -> snapshotUri(device) : Promise<url>
 };
 
 /** Clamp a number into [min, max]. */

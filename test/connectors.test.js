@@ -231,7 +231,13 @@ async function test(name, fn) {
     assert.ok(conns.has('govee') && conns.has('homeassistant'));
     const keys = devices.map((d) => d.key);
     assert.strictEqual(new Set(keys).size, keys.length);
-    assert.ok(devices.length >= 3); // 1 govee + 2 HA
+    assert.ok(devices.length >= 3); // 1 govee + HA
+  });
+  await test('control rejects an action the connector cannot do', async () => {
+    const devices = await registry.listDevices();
+    const govee = devices.find((d) => d.connectorId === 'govee');
+    await assert.rejects(() => registry.control(govee, 'temperature', 21));
+    await assert.rejects(() => registry.control(govee, 'ptz', 'up'));
   });
 
   console.log('');

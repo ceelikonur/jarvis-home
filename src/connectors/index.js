@@ -111,12 +111,22 @@ async function control(device, action, value) {
     case 'vacuum':
       if (!c.vacuum) throw new Error(`${c.name} cannot run vacuum actions`);
       return c.vacuum(device, value);
+    case 'ptz':
+      if (!c.ptz) throw new Error(`${c.name} cannot pan/tilt`);
+      return c.ptz(device, value);
     default:
       throw new Error(`Unknown action: ${action}`);
   }
 }
 
+/** Get a still-image URL for a camera device (connector must implement snapshotUri). */
+async function snapshot(device) {
+  const c = get(device.connectorId);
+  if (!c || !c.snapshotUri) throw new Error('Bu cihaz için görüntü yok');
+  return c.snapshotUri(device);
+}
+
 /** Test hook — forget the cached connector list so a re-require re-scans. */
 function _reset() { _connectors = null; }
 
-module.exports = { all, active, get, listDevices, deviceByKey, cachedDevices, control, _reset };
+module.exports = { all, active, get, listDevices, deviceByKey, cachedDevices, control, snapshot, _reset };

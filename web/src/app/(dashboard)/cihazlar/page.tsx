@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { toast } from 'sonner'
-import { Lightbulb, Power, PowerOff, RefreshCw, Loader2, Plug, Check, Plus, X, Trash2 } from 'lucide-react'
+import { Lightbulb, Power, PowerOff, RefreshCw, Loader2, Plug, Check, Plus, X, Trash2, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Camera } from 'lucide-react'
 
 interface Device {
   key: string
@@ -37,6 +37,27 @@ const VACUUM_ACTIONS = [
   { action: 'stop', label: 'Durdur' },
   { action: 'dock', label: 'Şarja dön' },
 ]
+
+// Camera snapshot that refreshes every few seconds (pseudo-live).
+function CameraView({ device }: { device: Device }) {
+  const [n, setN] = useState(0)
+  useEffect(() => {
+    const t = setInterval(() => setN((x) => x + 1), 5000)
+    return () => clearInterval(t)
+  }, [])
+  const src = `/api/devices/snapshot?connectorId=${encodeURIComponent(device.connectorId)}&id=${encodeURIComponent(device.id)}&t=${n}`
+  return (
+    <div className="space-y-2">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={src} alt={device.name} className="w-full rounded-md border bg-muted aspect-video object-cover"
+        onError={(e) => { (e.target as HTMLImageElement).style.opacity = '0.3' }}
+        onLoad={(e) => { (e.target as HTMLImageElement).style.opacity = '1' }} />
+      <Button size="sm" variant="outline" className="w-full" onClick={() => setN((x) => x + 1)}>
+        <RefreshCw className="h-3.5 w-3.5 mr-1" /> Görüntüyü yenile
+      </Button>
+    </div>
+  )
+}
 const COLORS = [
   { name: 'Kırmızı', rgb: { r: 255, g: 0, b: 0 }, hex: '#ef4444' },
   { name: 'Yeşil', rgb: { r: 0, g: 255, b: 0 }, hex: '#22c55e' },
@@ -231,6 +252,27 @@ export default function DevicesPage() {
                     {isBusy(`v${v.action}`) ? <Loader2 className="h-3 w-3 animate-spin" /> : v.label}
                   </Button>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* Camera snapshot */}
+          {d.capabilities.includes('snapshot') && <CameraView device={d} />}
+
+          {/* Camera PTZ */}
+          {d.capabilities.includes('ptz') && (
+            <div>
+              <p className="text-xs text-muted-foreground mb-1">Yön</p>
+              <div className="grid grid-cols-3 gap-1.5 max-w-[170px] mx-auto">
+                <div />
+                <Button size="sm" variant="outline" disabled={isBusy('pup')} onClick={() => control(d, 'ptz', 'up', 'pup', 'yukarı')}><ChevronUp className="h-4 w-4" /></Button>
+                <div />
+                <Button size="sm" variant="outline" disabled={isBusy('pleft')} onClick={() => control(d, 'ptz', 'left', 'pleft', 'sol')}><ChevronLeft className="h-4 w-4" /></Button>
+                <div className="flex items-center justify-center"><Camera className="h-4 w-4 text-muted-foreground" /></div>
+                <Button size="sm" variant="outline" disabled={isBusy('pright')} onClick={() => control(d, 'ptz', 'right', 'pright', 'sağ')}><ChevronRight className="h-4 w-4" /></Button>
+                <div />
+                <Button size="sm" variant="outline" disabled={isBusy('pdown')} onClick={() => control(d, 'ptz', 'down', 'pdown', 'aşağı')}><ChevronDown className="h-4 w-4" /></Button>
+                <div />
               </div>
             </div>
           )}
