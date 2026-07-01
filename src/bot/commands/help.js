@@ -74,6 +74,12 @@ Free text is auto-classified and handled:
   _/bakiye Mart_
 
 ──────────────────────────
+*Akıllı Ev / Smart Home*
+/cihazlar — Bağlı cihazları listele + Aç/Kapat
+  _(alias: /devices /isik /lamba)_
+  Connector eklemek için: \`npm run configure\` (ör. Govee ampuller)
+
+──────────────────────────
 *Manage*
 /delete event <id> — Delete an event
   _/delete event 2_

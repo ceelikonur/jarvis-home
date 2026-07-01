@@ -17,6 +17,7 @@ const { registerCalendarSyncCommand } = require('./commands/calendar');
 const { registerHelpCommand } = require('./commands/help');
 const { registerAnyListCommand } = require('./commands/anylist');
 const { registerPlanCommand } = require('./commands/plan');
+const { registerDeviceCommands } = require('./commands/devices');
 const budgetCommands = require('./commands/budget');
 const { registerTextHandler } = require('./handlers/text');
 
@@ -46,6 +47,7 @@ function createBot() {
   registerHelpCommand(bot);
   registerAnyListCommand(bot);
   registerPlanCommand(bot);
+  registerDeviceCommands(bot);
   budgetCommands.register(bot);
 
   // Register default handlers (must be last — catch-all)

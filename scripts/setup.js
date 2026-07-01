@@ -13,6 +13,7 @@
 const fs = require('fs');
 const path = require('path');
 const readline = require('readline');
+const Connectors = require('../src/connectors');
 
 const ROOT = path.resolve(__dirname, '..');
 const ENV_FILE = path.join(ROOT, '.env');
@@ -78,6 +79,24 @@ async function main() {
   // ── Locale & PIN & timezone ──
   const timezone = await askWithDefault('Timezone (IANA, e.g. Europe/Istanbul)', 'TIMEZONE', 'Europe/Istanbul');
   const pin = await askWithDefault('Web dashboard PIN (leave blank to disable)', 'WEB_PIN');
+
+  // ── Smart-home connectors (optional) ──
+  const connectorEnv = {};
+  const connectors = Connectors.all();
+  if (connectors.length) {
+    console.log('\nSmart-home connectors (optional) — control lights, plugs and more from JARVIS:');
+    for (const c of connectors) {
+      const yn = (await ask(`  Enable ${c.name} — ${c.description}? [y/N]: `)).trim().toLowerCase();
+      if (yn === 'y' || yn === 'yes') {
+        for (const key of c.requiredEnv) {
+          const hint = c.configHints && c.configHints[key] ? ` (${c.configHints[key]})` : '';
+          const def = realDefault(current[key]);
+          const val = (await ask(`    ${key}${hint}${def ? ` [${def}]` : ''}: `)).trim() || def;
+          if (val) connectorEnv[key] = val;
+        }
+      }
+    }
+  }
 
   // ── Write .env ──
   // Base the file on the existing .env (preserves optional keys you already set)

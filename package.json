@@ -9,7 +9,8 @@
     "web:install": "cd web && npm install",
     "web:build": "cd web && npm run build",
     "setup": "npm install && npm run web:install && npm run web:build",
-    "configure": "node scripts/setup.js"
+    "configure": "node scripts/setup.js",
+    "test": "node test/connectors.test.js"
   },
   "keywords": [
     "assistant",

@@ -18,6 +18,7 @@ on your own machine / home network — **no cloud services, no third-party data 
 - 🧠 **Optional local AI** — Ollama for natural-language parsing, semantic memory, and RAG
 - 📅 **Calendar** — publish an iCal feed, auto-import `.ics` files, optional Outlook sync
 - 🛒 **Optional AnyList** — sync shared shopping/todo lists
+- 💡 **Smart-home connectors** — control lights, plugs and more from the bot (Govee included; pluggable)
 - 🏠 **Configurable household** — define your own members, banks, and accounts (no one is hardcoded)
 
 ---
@@ -120,6 +121,32 @@ edits over time, so it improves as you use it.
 Turkish banks (Garanti, Yapı Kredi, İş Bankası, Akbank, QNB, Ziraat, Halkbank, Vakıfbank,
 Denizbank, TEB, ING, HSBC, Enpara), German **Haspa** (semicolon CSV), **Wise** (Excel),
 and any generic CSV with date / description / amount columns.
+
+---
+
+## Smart-home connectors
+
+Control smart devices (lights, plugs, …) straight from the Telegram bot. Enable
+the connectors you want during `npm run configure` — each asks for its own
+credentials and stores them in `.env`. Then, in the bot:
+
+```
+/cihazlar        # list your devices with On/Off buttons  (aliases: /devices /isik /lamba)
+```
+
+**Included:**
+
+- **Govee** — smart lights (bulbs, LED strips): on/off, brightness, colour.
+  Get an API key in the Govee Home app → profile → *About Us* → *Apply for API
+  Key* (arrives by email), then set `GOVEE_API_KEY` (the wizard does this for you).
+
+**Add your own connector** — the framework is pluggable: drop a file in
+`src/connectors/` that implements the contract in
+[`src/connectors/base.js`](src/connectors/base.js) (`id`, `name`, `requiredEnv`,
+`isConfigured()`, `listDevices()`, and any of `setPower` / `setBrightness` /
+`setColor`). The registry auto-discovers it, the onboarding wizard offers it, and
+`/cihazlar` controls it — no other wiring needed. See `src/connectors/govee.js`
+for a complete example.
 
 ---
 
