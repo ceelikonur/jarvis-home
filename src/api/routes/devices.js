@@ -19,6 +19,7 @@ router.get('/connectors', (req, res) => {
       requiredEnv: c.requiredEnv || [],
       configHints: c.configHints || {},
       capabilities: c.capabilities || [],
+      authType: c.authType || null,
       configured: safeConfigured(c),
     }));
     res.json({ connectors });
@@ -47,6 +48,30 @@ router.post('/connectors/:id/config', (req, res) => {
     res.json({ configured: safeConfigured(c) });
   } catch (err) {
     console.error('[api/connectors config POST]', err);
+    res.status(500).json({ error: String(err.message || err) });
+  }
+});
+
+// POST /api/connectors/:id/link/start — begin an OAuth device-code link (e.g. tado°).
+router.post('/connectors/:id/link/start', async (req, res) => {
+  try {
+    const c = Connectors.get(req.params.id);
+    if (!c || typeof c.linkStart !== 'function') return res.status(404).json({ error: 'bağlama desteklenmiyor' });
+    res.json(await c.linkStart());
+  } catch (err) {
+    console.error('[api/connectors link start]', err);
+    res.status(500).json({ error: String(err.message || err) });
+  }
+});
+
+// POST /api/connectors/:id/link/poll — { device_code } — check if the user approved.
+router.post('/connectors/:id/link/poll', async (req, res) => {
+  try {
+    const c = Connectors.get(req.params.id);
+    if (!c || typeof c.linkPoll !== 'function') return res.status(404).json({ error: 'bağlama desteklenmiyor' });
+    res.json(await c.linkPoll((req.body || {}).device_code));
+  } catch (err) {
+    console.error('[api/connectors link poll]', err);
     res.status(500).json({ error: String(err.message || err) });
   }
 });

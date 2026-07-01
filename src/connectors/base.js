@@ -30,9 +30,11 @@
 
 /** Canonical capability names shared across connectors. */
 const CAPABILITIES = {
-  POWER: 'power',
-  BRIGHTNESS: 'brightness',
-  COLOR: 'color',
+  POWER: 'power',            // on/off              -> setPower(device, bool)
+  BRIGHTNESS: 'brightness',  // 0-100               -> setBrightness(device, pct)
+  COLOR: 'color',            // {r,g,b}             -> setColor(device, rgb)
+  TEMPERATURE: 'temperature',// target °C           -> setTemperature(device, celsius)
+  VACUUM: 'vacuum',          // 'start'|'stop'|'dock' -> vacuum(device, action)
 };
 
 /** Clamp a number into [min, max]. */

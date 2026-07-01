@@ -307,7 +307,7 @@ Available actions:
 - {"type": "update_event", "id": <number>, "title": "...", "start_time": "YYYY-MM-DD HH:MM", "end_time": "YYYY-MM-DD HH:MM"}
 - {"type": "delete_event", "id": <number>}
 - {"type": "save_note", "content": "..."}
-- {"type": "control_device", "device": "<device name from the list below>", "power": true|false (optional), "brightness": <0-100> (optional), "color": "<kırmızı|yeşil|mavi|sarı|turuncu|mor|beyaz or #hex>" (optional)}
+- {"type": "control_device", "device": "<device name from the list below>", "power": true|false (optional), "brightness": <0-100> (optional), "color": "<kırmızı|yeşil|mavi|sarı|turuncu|mor|beyaz or #hex>" (optional), "temperature": <°C, for thermostats> (optional), "vacuum": "start|stop|dock" (optional)}
 ${deviceSection}
 ## Tasks vs Lists — CRITICAL distinction
 Tasks (görevler) and Lists (listeler) are TWO SEPARATE systems with separate UI tabs. Never confuse them.

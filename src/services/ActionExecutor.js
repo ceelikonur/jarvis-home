@@ -165,6 +165,14 @@ const ActionExecutor = {
           await Connectors.control(device, 'color', rgb);
           done.push(`renk ${action.color}`);
         }
+        if (action.temperature !== undefined && action.temperature !== null && action.temperature !== '') {
+          await Connectors.control(device, 'temperature', Number(action.temperature));
+          done.push(`${Number(action.temperature)}°C`);
+        }
+        if (action.vacuum) {
+          await Connectors.control(device, 'vacuum', String(action.vacuum));
+          done.push(`süpürge: ${action.vacuum}`);
+        }
         if (done.length === 0) return null;
         return `💡 ${device.name}: ${done.join(', ')}`;
       }

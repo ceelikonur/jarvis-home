@@ -105,6 +105,12 @@ async function control(device, action, value) {
     case 'color':
       if (!c.setColor) throw new Error(`${c.name} cannot set color`);
       return c.setColor(device, value);
+    case 'temperature':
+      if (!c.setTemperature) throw new Error(`${c.name} cannot set temperature`);
+      return c.setTemperature(device, value);
+    case 'vacuum':
+      if (!c.vacuum) throw new Error(`${c.name} cannot run vacuum actions`);
+      return c.vacuum(device, value);
     default:
       throw new Error(`Unknown action: ${action}`);
   }

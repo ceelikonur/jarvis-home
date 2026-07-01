@@ -42,6 +42,8 @@ global.fetch = async (url, opts = {}) => {
     return mockResponse([
       { entity_id: 'light.salon', state: 'on', attributes: { friendly_name: 'Salon Lamba', supported_color_modes: ['rgb', 'brightness'] } },
       { entity_id: 'switch.priz', state: 'off', attributes: { friendly_name: 'Priz' } },
+      { entity_id: 'climate.kalorifer', state: 'heat', attributes: { friendly_name: 'Kalorifer' } },
+      { entity_id: 'vacuum.robot', state: 'docked', attributes: { friendly_name: 'Robot Süpürge' } },
       { entity_id: 'sensor.sicaklik', state: '21', attributes: { friendly_name: 'Sıcaklık' } },
     ]);
   }
@@ -147,15 +149,25 @@ async function test(name, fn) {
     assert.strictEqual(hass.isConfigured(), false);
     process.env.HASS_TOKEN = saved;
   });
-  await test('HA listDevices filters to light/switch + reads caps', async () => {
+  await test('HA listDevices covers light/switch/climate/vacuum + reads caps', async () => {
     const devices = await hass.listDevices();
-    assert.strictEqual(devices.length, 2); // sensor filtered out
-    const light = devices.find((d) => d.id === 'light.salon');
-    const sw = devices.find((d) => d.id === 'switch.priz');
-    assert.deepStrictEqual(light.capabilities, ['power', 'brightness', 'color']);
-    assert.deepStrictEqual(sw.capabilities, ['power']);
-    assert.strictEqual(light.model, 'light');
-    assert.strictEqual(sw.model, 'switch');
+    assert.strictEqual(devices.length, 4); // sensor filtered out
+    const byId = (id) => devices.find((d) => d.id === id);
+    assert.deepStrictEqual(byId('light.salon').capabilities, ['power', 'brightness', 'color']);
+    assert.deepStrictEqual(byId('switch.priz').capabilities, ['power']);
+    assert.deepStrictEqual(byId('climate.kalorifer').capabilities, ['temperature', 'power']);
+    assert.deepStrictEqual(byId('vacuum.robot').capabilities, ['vacuum']);
+  });
+  await test('HA setTemperature calls climate.set_temperature', async () => {
+    await hass.setTemperature({ id: 'climate.kalorifer', model: 'climate' }, 21);
+    assert.ok(lastRequest.url.endsWith('/api/services/climate/set_temperature'));
+    assert.strictEqual(lastRequest.body.entity_id, 'climate.kalorifer');
+    assert.strictEqual(lastRequest.body.temperature, 21);
+  });
+  await test('HA vacuum dock → return_to_base', async () => {
+    await hass.vacuum({ id: 'vacuum.robot', model: 'vacuum' }, 'dock');
+    assert.ok(lastRequest.url.endsWith('/api/services/vacuum/return_to_base'));
+    assert.strictEqual(lastRequest.body.entity_id, 'vacuum.robot');
   });
   await test('HA setPower routes to the entity domain', async () => {
     await hass.setPower({ id: 'switch.priz', model: 'switch' }, true);

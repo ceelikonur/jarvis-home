@@ -150,9 +150,16 @@ Tap a device in `/cihazlar` to open its panel: **On/Off**, **brightness** preset
 - **Govee** — smart lights (bulbs, LED strips): on/off, brightness, colour.
   Get an API key in the Govee Home app → profile → *About Us* → *Apply for API
   Key* (arrives by email), then set `GOVEE_API_KEY` (the wizard does this for you).
-- **Home Assistant** — control every `light.*` / `switch.*` entity in your HA
-  install (fully local). Set `HASS_URL` and a Long-Lived Access Token `HASS_TOKEN`
-  (HA → profile → *Long-Lived Access Tokens*).
+- **tado°** — smart thermostats: set target temperature, turn heating off, resume
+  the schedule. No key to paste — connect once via the *Bağla* button (OAuth
+  device flow); the refresh token is stored and rotated automatically.
+- **Home Assistant** — control every `light.*` / `switch.*` / `climate.*` /
+  `vacuum.*` entity in your HA install (fully local). Set `HASS_URL` and a
+  Long-Lived Access Token `HASS_TOKEN` (HA → profile → *Long-Lived Access Tokens*).
+
+> **Devices without a clean public API** — robot vacuums (Mova/Dreame), Amazon
+> Alexa, Tapo camera privacy mode — are best added to **Home Assistant** and
+> controlled through the HA connector above, rather than fragile direct clients.
 
 **Add your own connector** — the framework is pluggable: drop a file in
 `src/connectors/` that implements the contract in

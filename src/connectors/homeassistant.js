@@ -74,22 +74,29 @@ module.exports = {
   async listDevices() {
     const states = await api('/api/states');
     return (states || [])
-      .filter((s) => s.entity_id && /^(light|switch)\./.test(s.entity_id))
+      .filter((s) => s.entity_id && /^(light|switch|climate|vacuum)\./.test(s.entity_id))
       .map((s) => {
         const attrs = s.attributes || {};
-        const isLight = s.entity_id.startsWith('light.');
-        const modes = attrs.supported_color_modes || [];
-        const capabilities = [CAPABILITIES.POWER];
-        if (isLight) {
+        const domain = domainOf(s.entity_id);
+        let capabilities = [];
+        if (domain === 'light') {
+          capabilities = [CAPABILITIES.POWER];
+          const modes = attrs.supported_color_modes || [];
           const hasColor = modes.some((m) => COLOR_MODES.includes(m));
           const hasBrightness = hasColor || modes.includes('brightness') || modes.includes('color_temp');
           if (hasBrightness) capabilities.push(CAPABILITIES.BRIGHTNESS);
           if (hasColor) capabilities.push(CAPABILITIES.COLOR);
+        } else if (domain === 'switch') {
+          capabilities = [CAPABILITIES.POWER];
+        } else if (domain === 'climate') {
+          capabilities = [CAPABILITIES.TEMPERATURE, CAPABILITIES.POWER];
+        } else if (domain === 'vacuum') {
+          capabilities = [CAPABILITIES.VACUUM];
         }
         return {
           id: s.entity_id,
           name: attrs.friendly_name || s.entity_id,
-          model: domainOf(s.entity_id), // 'light' | 'switch'
+          model: domain, // 'light' | 'switch' | 'climate' | 'vacuum'
           capabilities,
         };
       });
@@ -98,6 +105,18 @@ module.exports = {
   async setPower(device, on) {
     const domain = device.model || domainOf(device.id);
     await callService(domain, on ? 'turn_on' : 'turn_off', { entity_id: device.id });
+  },
+
+  async setTemperature(device, celsius) {
+    await callService('climate', 'set_temperature', {
+      entity_id: device.id,
+      temperature: clamp(Math.round(celsius), 5, 35),
+    });
+  },
+
+  async vacuum(device, action) {
+    const service = { start: 'start', stop: 'stop', dock: 'return_to_base' }[action] || action;
+    await callService('vacuum', service, { entity_id: device.id });
   },
 
   async setBrightness(device, pct) {
