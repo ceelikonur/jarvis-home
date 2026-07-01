@@ -126,9 +126,10 @@ and any generic CSV with date / description / amount columns.
 
 ## Smart-home connectors
 
-Control smart devices (lights, plugs, …) straight from the Telegram bot. Enable
-the connectors you want during `npm run configure` — each asks for its own
-credentials and stores them in `.env`. Then, in the bot:
+Control smart devices (lights, plugs, …) straight from the Telegram bot or the
+web dashboard. Enable the connectors you want either **from the web** (Cihazlar
+page → *Bağlantılar* → Ekle, enter the key/URL — takes effect immediately) or
+during `npm run configure`. Credentials are stored in `.env`. Then, in the bot:
 
 ```
 /cihazlar        # list your devices with On/Off buttons  (aliases: /devices /isik /lamba)
