@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>J.A.R.V.I.S. — Giriş</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0a0a0f;
+      color: #e4e4e7;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .login-card {
+      background: #18181b;
+      border: 1px solid #27272a;
+      border-radius: 16px;
+      padding: 48px 40px;
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+    }
+    .logo { font-size: 48px; margin-bottom: 8px; }
+    h1 { font-size: 24px; font-weight: 700; margin-bottom: 4px; color: #00d4ff; }
+    .subtitle { color: #71717a; font-size: 14px; margin-bottom: 32px; }
+    .pin-input {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-bottom: 24px;
+    }
+    .pin-input input {
+      width: 56px;
+      height: 64px;
+      background: #27272a;
+      border: 2px solid #3f3f46;
+      border-radius: 12px;
+      color: #e4e4e7;
+      font-size: 28px;
+      text-align: center;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .pin-input input:focus { border-color: #00d4ff; }
+    .error { color: #ef4444; font-size: 14px; margin-bottom: 16px; min-height: 20px; }
+    button {
+      width: 100%;
+      padding: 14px;
+      background: #00d4ff;
+      color: #0a0a0f;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    button:hover { opacity: 0.9; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+  </style>
+</head>
+<body>
+  <div class="login-card">
+    <div class="logo">🤖</div>
+    <h1>J.A.R.V.I.S.</h1>
+    <p class="subtitle">Ev Asistanı — PIN ile giriş yapın</p>
+    <div class="pin-input">
+      <input type="password" maxlength="1" inputmode="numeric" autofocus>
+      <input type="password" maxlength="1" inputmode="numeric">
+      <input type="password" maxlength="1" inputmode="numeric">
+      <input type="password" maxlength="1" inputmode="numeric">
+    </div>
+    <div class="error" id="error"></div>
+    <button id="loginBtn" disabled>Giriş</button>
+  </div>
+  <script>
+    const inputs = document.querySelectorAll('.pin-input input');
+    const btn = document.getElementById('loginBtn');
+    const error = document.getElementById('error');
+
+    inputs.forEach((input, i) => {
+      input.addEventListener('input', () => {
+        if (input.value && i < inputs.length - 1) inputs[i + 1].focus();
+        btn.disabled = getPin().length < 4;
+      });
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Backspace' && !input.value && i > 0) inputs[i - 1].focus();
+        if (e.key === 'Enter' && getPin().length === 4) login();
+      });
+    });
+
+    function getPin() { return Array.from(inputs).map(i => i.value).join(''); }
+
+    btn.addEventListener('click', login);
+
+    async function login() {
+      error.textContent = '';
+      btn.disabled = true;
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pin: getPin() }),
+        });
+        if (res.ok) {
+          window.location.href = '/';
+        } else {
+          error.textContent = 'Yanlış PIN. Tekrar deneyin.';
+          inputs.forEach(i => { i.value = ''; });
+          inputs[0].focus();
+        }
+      } catch (e) {
+        error.textContent = 'Bağlantı hatası.';
+      }
+      btn.disabled = false;
+    }
+
+    // Check if already authenticated
+    fetch('/api/auth/check').then(r => r.json()).then(data => {
+      if (data.authenticated) window.location.href = '/';
+      if (!data.pinRequired) window.location.href = '/';
+    });
+  </script>
+</body>
+</html>

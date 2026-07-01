@@ -1,0 +1,38 @@
+{
+  "name": "J.A.R.V.I.S. — Ev Asistanı",
+  "short_name": "JARVIS",
+  "description": "Bütçe takibi, takvim, görevler ve akıllı tahmin",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#6366f1",
+  "orientation": "any",
+  "lang": "tr",
+  "categories": ["finance", "productivity", "lifestyle"],
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Tahminler",
+      "url": "/tahminler",
+      "description": "AI bütçe tahminleri"
+    },
+    {
+      "name": "İşlemler",
+      "url": "/islemler",
+      "description": "Tüm işlemleri görüntüle"
+    },
+    {
+      "name": "Takvim",
+      "url": "/takvim",
+      "description": "Etkinlikler ve görevler"
+    }
+  ]
+}

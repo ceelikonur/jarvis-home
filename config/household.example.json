@@ -1,0 +1,42 @@
+{
+  "_README": "Copy this file to config/household.json and edit it for your own household. It teaches the budget parser who lives in your home, which banks/accounts you import, how to recognise salary deposits, and which transfers are 'internal' (money moving between your own accounts, which should NOT count as real income or expense). Everything here is optional — with an empty members list the parser still works, it just won't tag people or detect internal transfers. Currency and locale are set in .env (CURRENCY / LOCALE), not here. household.json is gitignored and never published.",
+
+  "members": [
+    {
+      "name": "Alice",
+      "aliases": ["A. Example"],
+      "counterpartyPatterns": [
+        "\\bALICE\\b\\s+\\bEXAMPLE\\b",
+        "\\bEXAMPLE\\b\\s+\\bALICE\\b"
+      ]
+    },
+    {
+      "name": "Bob",
+      "aliases": [],
+      "counterpartyPatterns": [
+        "\\bBOB\\b\\s+\\bEXAMPLE\\b"
+      ]
+    }
+  ],
+
+  "banks": ["Haspa", "N26", "Wise", "Intesa"],
+
+  "accounts": [
+    { "id": "alice-haspa", "name": "Hamburger Sparkasse", "owner": "Alice", "color": "#ef4444" },
+    { "id": "bob-wise",    "name": "Wise",                "owner": "Bob",   "color": "#22c55e" }
+  ],
+
+  "uploaders": [
+    { "id": "alice", "person": "Alice", "bank": "Haspa", "format": "csv",  "accept": ".csv",       "label": "Alice — Haspa (.csv)", "hint": "Bank CSV statement" },
+    { "id": "bob",   "person": "Bob",   "bank": "Wise",  "format": "xlsx", "accept": ".xlsx,.xls", "label": "Bob — Wise (.xlsx)",   "hint": "Wise Excel statement" }
+  ],
+
+  "importers": {
+    "haspaExcel": { "person": "Alice", "bank": "Haspa", "account": "Haspa-Alice" },
+    "wiseExcel":  { "person": "Bob",   "bank": "Wise",  "account": "Wise-Bob" }
+  },
+
+  "savings": { "ibanPrefixes": ["IT"] },
+
+  "salaryKeywords": ["SALARY", "PAYROLL", "GEHALT", "LOHN", "MAAŞ"]
+}

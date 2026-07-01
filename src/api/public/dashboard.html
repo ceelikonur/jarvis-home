@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>J.A.R.V.I.S. — Intelligence Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet" />
+  <style>
+    /* ─── Reset & Root ─────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0a0e1a;
+      --bg2:       #0d1220;
+      --bg3:       #111827;
+      --cyan:      #00d4ff;
+      --cyan-dim:  rgba(0, 212, 255, 0.15);
+      --cyan-glow: rgba(0, 212, 255, 0.08);
+      --purple:    #7b2fff;
+      --orange:    #ff6b35;
+      --green:     #00ff88;
+      --red:       #ff3355;
+      --text:      #c8e6f0;
+      --text-dim:  #5a7a8a;
+      --border:    rgba(0, 212, 255, 0.25);
+      --font-mono: 'Share Tech Mono', monospace;
+      --font-hud:  'Orbitron', sans-serif;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 16px;
+      overflow-x: hidden;
+    }
+
+    /* ─── Scanline / Grid Background ──────────────────────────── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 0, 0, 0.08) 2px,
+        rgba(0, 0, 0, 0.08) 4px
+      );
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ─── Boot Overlay ─────────────────────────────────────────── */
+    #boot-overlay {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      transition: opacity 0.6s ease;
+    }
+
+    #boot-overlay.fade-out {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .boot-title {
+      font-family: var(--font-hud);
+      font-size: 3rem;
+      font-weight: 900;
+      color: var(--cyan);
+      text-shadow: 0 0 40px var(--cyan), 0 0 80px rgba(0, 212, 255, 0.4);
+      letter-spacing: 0.3em;
+      animation: flicker 0.1s infinite alternate;
+    }
+
+    .boot-sub {
+      color: var(--text-dim);
+      letter-spacing: 0.2em;
+      font-size: 0.85rem;
+    }
+
+    .boot-bar {
+      width: 300px;
+      height: 2px;
+      background: rgba(0, 212, 255, 0.1);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .boot-bar-fill {
+      height: 100%;
+      background: var(--cyan);
+      box-shadow: 0 0 10px var(--cyan);
+      animation: boot-load 1s ease-out forwards;
+    }
+
+    @keyframes boot-load {
+      from { width: 0; }
+      to   { width: 100%; }
+    }
+
+    @keyframes flicker {
+      from { opacity: 1; }
+      to   { opacity: 0.92; }
+    }
+
+    /* ─── Main Layout ──────────────────────────────────────────── */
+    #app {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      padding: 12px;
+      gap: 12px;
+      opacity: 0;
+      transition: opacity 0.8s ease;
+    }
+
+    #app.visible { opacity: 1; }
+
+    /* ─── Header ───────────────────────────────────────────────── */
+    header {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      padding: 14px 20px;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      box-shadow: 0 0 30px var(--cyan-glow), inset 0 0 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .header-brand {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .brand-title {
+      font-family: var(--font-hud);
+      font-size: 1.6rem;
+      font-weight: 900;
+      color: var(--cyan);
+      text-shadow: 0 0 20px var(--cyan), 0 0 40px rgba(0, 212, 255, 0.3);
+      letter-spacing: 0.25em;
+    }
+
+    .brand-sub {
+      font-size: 0.68rem;
+      color: var(--text-dim);
+      letter-spacing: 0.12em;
+      margin-top: 2px;
+    }
+
+    .header-clock {
+      text-align: center;
+    }
+
+    #clock-time {
+      font-family: var(--font-hud);
+      font-size: 2.2rem;
+      font-weight: 700;
+      color: var(--cyan);
+      text-shadow: 0 0 15px var(--cyan);
+      letter-spacing: 0.08em;
+    }
+
+    #clock-date {
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      letter-spacing: 0.15em;
+      margin-top: 3px;
+    }
+
+    .header-status {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 6px;
+    }
+
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.75rem;
+      color: var(--green);
+      letter-spacing: 0.15em;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 10px var(--green), 0 0 20px rgba(0, 255, 136, 0.4);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.7; transform: scale(0.85); }
+    }
+
+    .refresh-label {
+      font-size: 0.65rem;
+      color: var(--text-dim);
+      letter-spacing: 0.1em;
+      transition: color 0.3s;
+      min-height: 14px;
+    }
+
+    .refresh-label.refreshing { color: var(--orange); }
+
+    /* ─── Main Grid ────────────────────────────────────────────── */
+    main {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      grid-template-rows: auto auto;
+      gap: 12px;
+    }
+
+    /* ─── Cards ────────────────────────────────────────────────── */
+    .card {
+      background: rgba(0, 0, 0, 0.45);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 16px;
+      box-shadow: 0 0 20px var(--cyan-glow), inset 0 0 20px rgba(0, 0, 0, 0.3);
+      transition: box-shadow 0.3s ease, border-color 0.3s ease;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .card:hover {
+      border-color: rgba(0, 212, 255, 0.5);
+      box-shadow: 0 0 35px rgba(0, 212, 255, 0.15), inset 0 0 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+      opacity: 0.5;
+    }
+
+    /* corner decoration */
+    .card::after {
+      content: '';
+      position: absolute;
+      bottom: 0; right: 0;
+      width: 16px; height: 16px;
+      border-right: 1px solid var(--cyan);
+      border-bottom: 1px solid var(--cyan);
+      opacity: 0.4;
+    }
+
+    .card-title {
+      font-family: var(--font-hud);
+      font-size: 0.68rem;
+      letter-spacing: 0.2em;
+      color: var(--cyan);
+      text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(0, 212, 255, 0.12);
+    }
+
+    .card-title .count-badge {
+      margin-left: auto;
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--text-dim);
+      background: rgba(0, 212, 255, 0.08);
+      padding: 2px 7px;
+      border-radius: 3px;
+      border: 1px solid rgba(0, 212, 255, 0.15);
+    }
+
+    .empty-state {
+      color: var(--text-dim);
+      font-style: italic;
+      font-size: 0.8rem;
+      padding: 10px 0;
+      text-align: center;
+      letter-spacing: 0.05em;
+    }
+
+    /* ─── Grid placement ───────────────────────────────────────── */
+    .card-tasks    { grid-column: 1; grid-row: 1; }
+    .card-events   { grid-column: 2; grid-row: 1; }
+    .card-lists    { grid-column: 3; grid-row: 1 / 3; }
+    .card-notes    { grid-column: 1 / 3; grid-row: 2; }
+    .card-stats    { } /* footer */
+
+    /* ─── Footer / Stats bar ───────────────────────────────────── */
+    footer {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+    }
+
+    .stat-block {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 12px 16px;
+      box-shadow: 0 0 15px var(--cyan-glow);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-block::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--purple), transparent);
+      opacity: 0.6;
+    }
+
+    .stat-label {
+      font-size: 0.6rem;
+      letter-spacing: 0.18em;
+      color: var(--text-dim);
+      margin-bottom: 6px;
+      font-family: var(--font-hud);
+    }
+
+    .stat-value {
+      font-family: var(--font-hud);
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--purple);
+      text-shadow: 0 0 15px rgba(123, 47, 255, 0.6);
+      line-height: 1;
+    }
+
+    .stat-block:first-child .stat-value { color: var(--cyan); text-shadow: 0 0 15px rgba(0, 212, 255, 0.6); }
+    .stat-block:nth-child(3) .stat-value { color: var(--green); text-shadow: 0 0 15px rgba(0, 255, 136, 0.5); }
+    .stat-block:nth-child(4) .stat-value { color: var(--orange); text-shadow: 0 0 15px rgba(255, 107, 53, 0.5); }
+
+    /* ─── Tasks ────────────────────────────────────────────────── */
+    .task-list { display: flex; flex-direction: column; gap: 7px; max-height: 300px; overflow-y: auto; }
+
+    .task-item {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      padding: 8px 10px;
+      background: rgba(0, 212, 255, 0.03);
+      border: 1px solid rgba(0, 212, 255, 0.1);
+      border-radius: 3px;
+      border-left: 3px solid var(--border);
+      transition: border-left-color 0.2s;
+    }
+
+    .task-item.priority-high  { border-left-color: var(--red); }
+    .task-item.priority-normal { border-left-color: var(--cyan); }
+    .task-item.priority-low   { border-left-color: var(--text-dim); }
+
+    .task-header { display: flex; align-items: center; gap: 8px; }
+
+    .priority-badge {
+      font-size: 0.6rem;
+      padding: 1px 6px;
+      border-radius: 2px;
+      letter-spacing: 0.1em;
+      font-family: var(--font-hud);
+      white-space: nowrap;
+    }
+
+    .badge-high   { background: rgba(255, 51, 85, 0.2); color: var(--red); border: 1px solid rgba(255, 51, 85, 0.3); }
+    .badge-normal { background: rgba(0, 212, 255, 0.1); color: var(--cyan); border: 1px solid rgba(0, 212, 255, 0.2); }
+    .badge-low    { background: rgba(90, 122, 138, 0.15); color: var(--text-dim); border: 1px solid rgba(90, 122, 138, 0.2); }
+
+    .task-title { font-size: 0.82rem; color: var(--text); flex: 1; }
+
+    .task-due {
+      font-size: 0.68rem;
+      color: var(--text-dim);
+      letter-spacing: 0.05em;
+    }
+
+    .task-due.overdue { color: var(--red); }
+
+    /* ─── Events ───────────────────────────────────────────────── */
+    .event-list { display: flex; flex-direction: column; gap: 7px; max-height: 300px; overflow-y: auto; }
+
+    .event-item {
+      padding: 8px 10px;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(0, 212, 255, 0.1);
+      border-radius: 3px;
+      position: relative;
+    }
+
+    .event-item.today {
+      border-color: rgba(0, 212, 255, 0.45);
+      background: rgba(0, 212, 255, 0.05);
+      box-shadow: 0 0 10px rgba(0, 212, 255, 0.08);
+    }
+
+    .event-time {
+      font-size: 0.65rem;
+      color: var(--cyan);
+      letter-spacing: 0.08em;
+      margin-bottom: 3px;
+    }
+
+    .event-title-text { font-size: 0.82rem; color: var(--text); }
+
+    .event-today-badge {
+      position: absolute;
+      top: 6px; right: 8px;
+      font-size: 0.55rem;
+      color: var(--cyan);
+      font-family: var(--font-hud);
+      letter-spacing: 0.1em;
+      background: rgba(0, 212, 255, 0.12);
+      padding: 1px 5px;
+      border-radius: 2px;
+    }
+
+    /* ─── Lists ────────────────────────────────────────────────── */
+    .lists-container { display: flex; flex-direction: column; gap: 12px; max-height: 580px; overflow-y: auto; }
+
+    .list-section { }
+
+    .list-header {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 6px;
+      padding-bottom: 5px;
+      border-bottom: 1px solid rgba(0, 212, 255, 0.1);
+    }
+
+    .list-name {
+      font-family: var(--font-hud);
+      font-size: 0.65rem;
+      letter-spacing: 0.12em;
+      color: var(--cyan);
+    }
+
+    .list-count-badge {
+      margin-left: auto;
+      font-size: 0.6rem;
+      color: var(--text-dim);
+      background: rgba(0, 0, 0, 0.3);
+      padding: 1px 6px;
+      border-radius: 10px;
+      border: 1px solid rgba(0, 212, 255, 0.1);
+    }
+
+    .list-items { display: flex; flex-direction: column; gap: 4px; }
+
+    .list-item-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 8px;
+      font-size: 0.78rem;
+      color: var(--text);
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 2px;
+    }
+
+    .list-item-row::before {
+      content: '▸';
+      color: var(--cyan);
+      font-size: 0.6rem;
+      flex-shrink: 0;
+    }
+
+    .list-empty { color: var(--text-dim); font-size: 0.72rem; padding: 4px 8px; font-style: italic; }
+
+    /* ─── Notes ────────────────────────────────────────────────── */
+    .notes-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 8px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .note-card {
+      background: rgba(123, 47, 255, 0.05);
+      border: 1px solid rgba(123, 47, 255, 0.2);
+      border-radius: 3px;
+      padding: 10px;
+      position: relative;
+    }
+
+    .note-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--purple), transparent);
+      opacity: 0.4;
+    }
+
+    .note-content {
+      font-size: 0.78rem;
+      color: var(--text);
+      line-height: 1.5;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .note-time {
+      font-size: 0.6rem;
+      color: var(--text-dim);
+      margin-top: 6px;
+      letter-spacing: 0.05em;
+    }
+
+    /* ─── Scrollbars ───────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.3); }
+    ::-webkit-scrollbar-thumb { background: rgba(0, 212, 255, 0.25); border-radius: 2px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(0, 212, 255, 0.45); }
+
+    /* ─── Cursor blink ─────────────────────────────────────────── */
+    .cursor::after {
+      content: '█';
+      animation: blink 1s step-end infinite;
+      color: var(--cyan);
+      font-size: 0.7em;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0; }
+    }
+
+    /* ─── Animations ───────────────────────────────────────────── */
+    @keyframes slide-in {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .animate-in { animation: slide-in 0.4s ease forwards; }
+
+    /* ─── Corner decorations on cards ─────────────────────────── */
+    .corner-tl {
+      position: absolute;
+      top: 6px; left: 6px;
+      width: 10px; height: 10px;
+      border-top: 1px solid var(--cyan);
+      border-left: 1px solid var(--cyan);
+      opacity: 0.4;
+    }
+
+    /* ─── Error state ──────────────────────────────────────────── */
+    .error-msg {
+      color: var(--red);
+      font-size: 0.75rem;
+      padding: 8px;
+      border: 1px solid rgba(255, 51, 85, 0.2);
+      border-radius: 3px;
+      background: rgba(255, 51, 85, 0.05);
+    }
+
+    /* ─── Responsive tweaks ────────────────────────────────────── */
+    @media (max-width: 1100px) {
+      main { grid-template-columns: 1fr 1fr; }
+      .card-lists { grid-column: 1 / 3; grid-row: 2; }
+      .card-notes { grid-column: 1 / 3; grid-row: 3; }
+      footer { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    @media (max-width: 700px) {
+      main { grid-template-columns: 1fr; }
+      .card-tasks, .card-events, .card-lists, .card-notes { grid-column: 1; grid-row: auto; }
+      footer { grid-template-columns: repeat(2, 1fr); }
+      .header-clock { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ─── Boot Overlay ──────────────────────────────────────── -->
+<div id="boot-overlay">
+  <div class="boot-title">J.A.R.V.I.S.</div>
+  <div class="boot-sub">INITIALIZING SYSTEMS...</div>
+  <div class="boot-bar"><div class="boot-bar-fill"></div></div>
+</div>
+
+<!-- ─── Main App ───────────────────────────────────────────── -->
+<div id="app">
+
+  <!-- Header -->
+  <header>
+    <div class="header-brand">
+      <div class="brand-title">J.A.R.V.I.S.<span class="cursor"></span></div>
+      <div class="brand-sub">JUST A RATHER VERY INTELLIGENT SYSTEM</div>
+    </div>
+
+    <div class="header-clock">
+      <div id="clock-time">00:00:00</div>
+      <div id="clock-date">—</div>
+    </div>
+
+    <div class="header-status">
+      <a href="/lists.html" style="color: var(--cyan); text-decoration: none; font-family: var(--font-hud); font-size: 0.8rem; letter-spacing: 0.1em; opacity: 0.8; transition: opacity 0.2s; margin-bottom: 4px;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.8'">&#128203; TASKS & LISTS</a>
+      <a href="/availability.html" style="color: var(--cyan); text-decoration: none; font-family: var(--font-hud); font-size: 0.8rem; letter-spacing: 0.1em; opacity: 0.8; transition: opacity 0.2s; margin-bottom: 4px;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.8'">&#128197; AVAILABILITY</a>
+      <div class="status-indicator">
+        <div class="status-dot"></div>
+        <span>ONLINE</span>
+      </div>
+      <div id="refresh-label" class="refresh-label">SYSTEMS NOMINAL</div>
+    </div>
+  </header>
+
+  <!-- Main Grid -->
+  <main>
+    <!-- Tasks -->
+    <div class="card card-tasks animate-in" style="animation-delay:0.1s">
+      <div class="corner-tl"></div>
+      <div class="card-title">
+        ⚡ ACTIVE DIRECTIVES
+        <span id="tasks-count" class="count-badge">—</span>
+      </div>
+      <div id="tasks-content" class="task-list">
+        <div class="empty-state">Loading...</div>
+      </div>
+    </div>
+
+    <!-- Events / Calendar -->
+    <div class="card card-events animate-in" style="animation-delay:0.2s">
+      <div class="corner-tl"></div>
+      <div class="card-title">
+        📅 UPCOMING EVENTS
+        <span id="events-count" class="count-badge">—</span>
+      </div>
+      <div id="events-content" class="event-list">
+        <div class="empty-state">Loading...</div>
+      </div>
+    </div>
+
+    <!-- Lists -->
+    <div class="card card-lists animate-in" style="animation-delay:0.3s">
+      <div class="corner-tl"></div>
+      <div class="card-title">
+        🛒 ACTIVE LISTS
+        <span id="lists-count" class="count-badge">—</span>
+      </div>
+      <div id="lists-content" class="lists-container">
+        <div class="empty-state">Loading...</div>
+      </div>
+    </div>
+
+    <!-- Notes -->
+    <div class="card card-notes animate-in" style="animation-delay:0.4s">
+      <div class="corner-tl"></div>
+      <div class="card-title">
+        📝 RECENT INTELLIGENCE
+        <span id="notes-count" class="count-badge">—</span>
+      </div>
+      <div id="notes-content" class="notes-grid">
+        <div class="empty-state">Loading...</div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer Stats -->
+  <footer>
+    <div class="stat-block animate-in" style="animation-delay:0.5s">
+      <div class="stat-label">NEURAL MEMORIES</div>
+      <div id="stat-memories" class="stat-value">—</div>
+    </div>
+    <div class="stat-block animate-in" style="animation-delay:0.55s">
+      <div class="stat-label">CONVERSATIONS</div>
+      <div id="stat-conversations" class="stat-value">—</div>
+    </div>
+    <div class="stat-block animate-in" style="animation-delay:0.6s">
+      <div class="stat-label">ACTIVE LISTS</div>
+      <div id="stat-lists" class="stat-value">—</div>
+    </div>
+    <div class="stat-block animate-in" style="animation-delay:0.65s">
+      <div class="stat-label">PENDING TASKS</div>
+      <div id="stat-tasks" class="stat-value">—</div>
+    </div>
+    <div class="stat-block animate-in" style="animation-delay:0.7s">
+      <div class="stat-label">UPCOMING EVENTS</div>
+      <div id="stat-events" class="stat-value">—</div>
+    </div>
+  </footer>
+
+</div>
+
+<script>
+// ─── Clock ────────────────────────────────────────────────────
+function startClock() {
+  const timeEl = document.getElementById('clock-time');
+  const dateEl = document.getElementById('clock-date');
+
+  const DAYS   = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+  const MONTHS = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+
+  function tick() {
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2, '0');
+    const mm = String(now.getMinutes()).padStart(2, '0');
+    const ss = String(now.getSeconds()).padStart(2, '0');
+    timeEl.textContent = `${hh}:${mm}:${ss}`;
+
+    const day   = DAYS[now.getDay()];
+    const month = MONTHS[now.getMonth()];
+    const date  = String(now.getDate()).padStart(2, '0');
+    const year  = now.getFullYear();
+    dateEl.textContent = `${day} ${date} ${month} ${year}`;
+  }
+
+  tick();
+  setInterval(tick, 1000);
+}
+
+// ─── Helpers ──────────────────────────────────────────────────
+function isToday(dateStr) {
+  if (!dateStr) return false;
+  const d = new Date(dateStr);
+  const now = new Date();
+  return d.getFullYear() === now.getFullYear() &&
+         d.getMonth()    === now.getMonth() &&
+         d.getDate()     === now.getDate();
+}
+
+function isOverdue(dateStr) {
+  if (!dateStr) return false;
+  return new Date(dateStr) < new Date();
+}
+
+function formatEventTime(start, end) {
+  const s = new Date(start);
+  const e = new Date(end);
+  const opts = { month: 'short', day: 'numeric' };
+  const timeOpts = { hour: '2-digit', minute: '2-digit', hour12: false };
+
+  if (isToday(start)) {
+    return `TODAY  ${s.toLocaleTimeString([], timeOpts)} → ${e.toLocaleTimeString([], timeOpts)}`;
+  }
+  return `${s.toLocaleDateString([], opts)}  ${s.toLocaleTimeString([], timeOpts)}`;
+}
+
+function formatRelativeTime(dateStr) {
+  const d = new Date(dateStr);
+  const diff = Date.now() - d.getTime();
+  const mins  = Math.floor(diff / 60000);
+  const hours = Math.floor(diff / 3600000);
+  const days  = Math.floor(diff / 86400000);
+
+  if (mins < 1)    return 'just now';
+  if (mins < 60)   return `${mins}m ago`;
+  if (hours < 24)  return `${hours}h ago`;
+  if (days < 7)    return `${days}d ago`;
+  return d.toLocaleDateString();
+}
+
+function truncate(str, n) {
+  if (!str) return '';
+  return str.length > n ? str.slice(0, n) + '…' : str;
+}
+
+function esc(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+// ─── Render Tasks ─────────────────────────────────────────────
+function renderTasks(tasks) {
+  const el = document.getElementById('tasks-content');
+  const countEl = document.getElementById('tasks-count');
+
+  if (!tasks || tasks.length === 0) {
+    countEl.textContent = '0';
+    el.innerHTML = '<div class="empty-state">No pending directives, sir.</div>';
+    return;
+  }
+
+  countEl.textContent = tasks.length;
+
+  const priorityOrder = { high: 0, normal: 1, low: 2 };
+  const sorted = [...tasks].sort((a, b) =>
+    (priorityOrder[a.priority] ?? 1) - (priorityOrder[b.priority] ?? 1)
+  );
+
+  const BADGE = {
+    high:   '<span class="priority-badge badge-high">● HIGH</span>',
+    normal: '<span class="priority-badge badge-normal">◆ NORMAL</span>',
+    low:    '<span class="priority-badge badge-low">○ LOW</span>',
+  };
+
+  el.innerHTML = sorted.map(task => {
+    const overdue = task.due_date && isOverdue(task.due_date) && task.status === 'pending';
+    const dueHtml = task.due_date
+      ? `<div class="task-due ${overdue ? 'overdue' : ''}">
+           ${overdue ? '⚠ OVERDUE — ' : ''}DUE: ${esc(task.due_date)}
+         </div>`
+      : '';
+
+    return `
+      <div class="task-item priority-${esc(task.priority || 'normal')}">
+        <div class="task-header">
+          ${BADGE[task.priority] || BADGE.normal}
+          <span class="task-title">${esc(task.title)}</span>
+        </div>
+        ${dueHtml}
+      </div>
+    `;
+  }).join('');
+}
+
+// ─── Render Events ────────────────────────────────────────────
+function renderEvents(events) {
+  const el = document.getElementById('events-content');
+  const countEl = document.getElementById('events-count');
+
+  const upcoming = (events || []).slice(0, 5);
+
+  if (upcoming.length === 0) {
+    countEl.textContent = '0';
+    el.innerHTML = '<div class="empty-state">Schedule clear, sir.</div>';
+    return;
+  }
+
+  countEl.textContent = upcoming.length;
+
+  el.innerHTML = upcoming.map(evt => {
+    const today = isToday(evt.start_time);
+    return `
+      <div class="event-item ${today ? 'today' : ''}">
+        ${today ? '<span class="event-today-badge">TODAY</span>' : ''}
+        <div class="event-time">${esc(formatEventTime(evt.start_time, evt.end_time))}</div>
+        <div class="event-title-text">${esc(evt.title)}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ─── Render Lists ─────────────────────────────────────────────
+function renderLists(lists) {
+  const el = document.getElementById('lists-content');
+  const countEl = document.getElementById('lists-count');
+
+  if (!lists || lists.length === 0) {
+    countEl.textContent = '0';
+    el.innerHTML = '<div class="empty-state">No active lists, sir.</div>';
+    return;
+  }
+
+  countEl.textContent = lists.length;
+
+  el.innerHTML = lists.map(list => {
+    const items = list.items || [];
+    const itemsHtml = items.length > 0
+      ? items.slice(0, 12).map(item =>
+          `<div class="list-item-row">${esc(item.content)}</div>`
+        ).join('') + (items.length > 12 ? `<div class="list-empty">+${items.length - 12} more</div>` : '')
+      : '<div class="list-empty">All clear</div>';
+
+    return `
+      <div class="list-section">
+        <div class="list-header">
+          <span>${esc(list.icon || '📋')}</span>
+          <span class="list-name">${esc(list.name.toUpperCase())}</span>
+          <span class="list-count-badge">${items.length} items</span>
+        </div>
+        <div class="list-items">${itemsHtml}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ─── Render Notes ─────────────────────────────────────────────
+function renderNotes(notes) {
+  const el = document.getElementById('notes-content');
+  const countEl = document.getElementById('notes-count');
+
+  const recent = (notes || []).slice(0, 6);
+
+  if (recent.length === 0) {
+    countEl.textContent = '0';
+    el.innerHTML = '<div class="empty-state">No intelligence on file, sir.</div>';
+    return;
+  }
+
+  countEl.textContent = recent.length;
+
+  el.innerHTML = recent.map(note => `
+    <div class="note-card">
+      <div class="note-content">${esc(truncate(note.content, 120))}</div>
+      <div class="note-time">${formatRelativeTime(note.created_at)}</div>
+    </div>
+  `).join('');
+}
+
+// ─── Render Stats ─────────────────────────────────────────────
+function renderStats(data) {
+  document.getElementById('stat-memories').textContent      = (data.memories_count ?? '—').toLocaleString();
+  document.getElementById('stat-conversations').textContent = (data.conversations_count ?? '—').toLocaleString();
+  document.getElementById('stat-lists').textContent         = (data.lists_count ?? '—').toLocaleString();
+  document.getElementById('stat-tasks').textContent         = (data.tasks_count ?? '—').toLocaleString();
+  document.getElementById('stat-events').textContent        = (data.events_count ?? '—').toLocaleString();
+}
+
+// ─── Fetch & Refresh ──────────────────────────────────────────
+const refreshLabel = document.getElementById('refresh-label');
+let lastFetched = null;
+
+async function fetchData() {
+  refreshLabel.textContent = 'REFRESHING...';
+  refreshLabel.classList.add('refreshing');
+
+  try {
+    const res = await fetch('/api/overview');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = await res.json();
+    const data = json.data;
+
+    renderTasks(data.tasks);
+    renderEvents(data.events);
+    renderLists(data.lists);
+    renderNotes(data.notes);
+    renderStats(data);
+
+    lastFetched = new Date();
+    const hh = String(lastFetched.getHours()).padStart(2, '0');
+    const mm = String(lastFetched.getMinutes()).padStart(2, '0');
+    const ss = String(lastFetched.getSeconds()).padStart(2, '0');
+    refreshLabel.textContent = `LAST SYNC: ${hh}:${mm}:${ss}`;
+  } catch (err) {
+    console.error('Dashboard fetch error:', err);
+    refreshLabel.textContent = 'SYNC ERROR';
+    refreshLabel.style.color = 'var(--red)';
+
+    const errHtml = `<div class="error-msg">⚠ Connection failed. Retrying...</div>`;
+    ['tasks-content', 'events-content', 'lists-content', 'notes-content'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el && el.querySelector('.empty-state')) el.innerHTML = errHtml;
+    });
+  } finally {
+    refreshLabel.classList.remove('refreshing');
+  }
+}
+
+// ─── Init ─────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  startClock();
+
+  // Boot sequence
+  setTimeout(() => {
+    const overlay = document.getElementById('boot-overlay');
+    const app = document.getElementById('app');
+
+    overlay.classList.add('fade-out');
+    app.classList.add('visible');
+
+    setTimeout(() => {
+      overlay.style.display = 'none';
+    }, 700);
+
+    fetchData();
+  }, 1200);
+
+  // Auto-refresh every 30 seconds
+  setInterval(fetchData, 30000);
+});
+</script>
+</body>
+</html>

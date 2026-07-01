@@ -1,0 +1,40 @@
+# Node.js
+node_modules/
+dist/
+build/
+.next/
+next-env.d.ts
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.DS_Store
+*.log
+.cache/
+coverage/
+*.tsbuildinfo
+
+# Secrets & local config — NEVER commit these
+.env
+.env.local
+.env.*.local
+.mcp.json
+.claude/settings.local.json
+
+# Personal / household config (copy household.example.json -> household.json)
+config/household.json
+
+# Personal dev/utility scripts (backfills, one-off tests) — only the setup
+# wizard is part of the published app.
+scripts/*
+!scripts/setup.js
+
+# Personal data — bank statements, training data, anything private
+test_data/
+
+# Database (live personal data)
+data/
+*.db
+*.db-wal
+*.db-shm
+*.db-shm-*
+*.bak-*

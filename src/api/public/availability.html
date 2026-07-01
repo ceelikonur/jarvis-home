@@ -1,0 +1,1146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>J.A.R.V.I.S. — Availability</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0a0e1a;
+      --bg2:       #0d1220;
+      --bg3:       #111827;
+      --cyan:      #00d4ff;
+      --cyan-dim:  rgba(0, 212, 255, 0.15);
+      --cyan-glow: rgba(0, 212, 255, 0.08);
+      --purple:    #7b2fff;
+      --orange:    #ff6b35;
+      --green:     #00ff88;
+      --red:       #ff3355;
+      --text:      #c8e6f0;
+      --text-dim:  #5a7a8a;
+      --border:    rgba(0, 212, 255, 0.25);
+      --font-mono: 'Share Tech Mono', monospace;
+      --font-hud:  'Orbitron', sans-serif;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 16px;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg, transparent, transparent 2px,
+        rgba(0, 0, 0, 0.08) 2px, rgba(0, 0, 0, 0.08) 4px
+      );
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    #app {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 12px;
+      gap: 12px;
+    }
+
+    /* ─── Header ─────────────────────────────────── */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      box-shadow: 0 0 30px var(--cyan-glow), inset 0 0 30px rgba(0, 0, 0, 0.5);
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .brand-title {
+      font-family: var(--font-hud);
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--cyan);
+      text-shadow: 0 0 20px var(--cyan);
+      letter-spacing: 0.15em;
+    }
+
+    .brand-title a { color: inherit; text-decoration: none; }
+
+    .page-label {
+      font-family: var(--font-hud);
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      letter-spacing: 0.2em;
+      border-left: 1px solid var(--border);
+      padding-left: 16px;
+    }
+
+    .nav-link {
+      color: var(--cyan);
+      text-decoration: none;
+      font-size: 0.85rem;
+      opacity: 0.7;
+      transition: opacity 0.2s;
+    }
+    .nav-link:hover { opacity: 1; }
+
+    .header-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    /* View mode switcher */
+    .view-switcher {
+      display: flex;
+      gap: 2px;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .view-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-dim);
+      font-family: var(--font-hud);
+      font-size: 0.65rem;
+      padding: 6px 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 0.1em;
+    }
+
+    .view-btn:hover { color: var(--cyan); background: rgba(0, 212, 255, 0.08); }
+
+    .view-btn.active {
+      color: var(--cyan);
+      background: rgba(0, 212, 255, 0.2);
+      text-shadow: 0 0 8px var(--cyan);
+    }
+
+    /* Date navigation */
+    .date-nav {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .date-nav button {
+      background: rgba(0, 212, 255, 0.1);
+      border: 1px solid var(--border);
+      color: var(--cyan);
+      font-family: var(--font-hud);
+      font-size: 1rem;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .date-nav button:hover {
+      background: rgba(0, 212, 255, 0.25);
+      box-shadow: 0 0 10px var(--cyan-glow);
+    }
+
+    .date-display {
+      font-family: var(--font-hud);
+      font-size: 0.9rem;
+      color: var(--cyan);
+      letter-spacing: 0.1em;
+      min-width: 200px;
+      text-align: center;
+    }
+
+    .date-today-btn {
+      font-size: 0.7rem !important;
+      padding: 4px 8px !important;
+      opacity: 0.6;
+    }
+    .date-today-btn:hover { opacity: 1 !important; }
+
+    /* ─── Timeline Grid (Day & Week) ─────────────── */
+    .timeline-container {
+      flex: 1;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      overflow-y: auto;
+      overflow-x: auto;
+      box-shadow: 0 0 20px var(--cyan-glow);
+    }
+
+    .timeline-header {
+      display: grid;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: rgba(10, 14, 26, 0.95);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(10px);
+    }
+
+    .timeline-header-cell {
+      padding: 10px 8px;
+      font-family: var(--font-hud);
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      color: var(--cyan);
+      text-align: center;
+      border-right: 1px solid rgba(0, 212, 255, 0.1);
+    }
+
+    .timeline-header-cell:first-child {
+      text-align: left;
+      color: var(--text-dim);
+    }
+
+    .timeline-header-cell.today-col {
+      background: rgba(0, 212, 255, 0.08);
+      color: var(--green);
+    }
+
+    .timeline-header-cell.mutual-header { color: var(--green); }
+
+    .timeline-body { position: relative; }
+
+    .time-row {
+      display: grid;
+      min-height: 60px;
+      border-bottom: 1px solid rgba(0, 212, 255, 0.06);
+    }
+
+    .time-row:nth-child(even) { background: rgba(0, 0, 0, 0.15); }
+
+    .time-cell {
+      padding: 4px 8px;
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      font-family: var(--font-mono);
+      border-right: 1px solid rgba(0, 212, 255, 0.06);
+      display: flex;
+      align-items: flex-start;
+      padding-top: 2px;
+    }
+
+    .person-cell, .day-cell {
+      position: relative;
+      border-right: 1px solid rgba(0, 212, 255, 0.06);
+      min-height: 60px;
+    }
+
+    .day-cell.today-col { background: rgba(0, 212, 255, 0.04); }
+
+    .mutual-cell {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-right: none;
+    }
+
+    .mutual-free {
+      color: var(--green);
+      font-size: 1.2rem;
+      text-shadow: 0 0 10px var(--green);
+      animation: pulse-green 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse-green {
+      0%, 100% { opacity: 0.6; }
+      50% { opacity: 1; }
+    }
+
+    .event-block {
+      position: absolute;
+      left: 2px;
+      right: 2px;
+      border-radius: 3px;
+      padding: 2px 4px;
+      font-size: 0.65rem;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      color: #fff;
+      font-weight: 500;
+      border-left: 3px solid;
+      backdrop-filter: blur(4px);
+      z-index: 2;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .event-block:hover {
+      transform: scale(1.02);
+      z-index: 5;
+      white-space: normal;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+    }
+
+    .event-block .event-time { font-size: 0.55rem; opacity: 0.7; }
+    .event-block .event-title { display: block; }
+
+    .time-row.mutual-free-row {
+      background: rgba(0, 255, 136, 0.03);
+      box-shadow: inset 0 0 20px rgba(0, 255, 136, 0.05);
+    }
+
+    .no-events {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-dim);
+      font-size: 1.1rem;
+    }
+
+    .no-events .icon {
+      font-size: 3rem;
+      margin-bottom: 16px;
+      display: block;
+    }
+
+    /* ─── Month View ─────────────────────────────── */
+    .month-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 1px;
+      background: rgba(0, 212, 255, 0.06);
+      padding: 1px;
+    }
+
+    .month-header-cell {
+      padding: 10px 8px;
+      font-family: var(--font-hud);
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      color: var(--cyan);
+      text-align: center;
+      background: rgba(10, 14, 26, 0.95);
+    }
+
+    .month-day {
+      background: rgba(0, 0, 0, 0.3);
+      min-height: 100px;
+      padding: 6px;
+      position: relative;
+      transition: background 0.2s;
+      cursor: pointer;
+    }
+
+    .month-day:hover { background: rgba(0, 212, 255, 0.06); }
+
+    .month-day.other-month { opacity: 0.3; }
+
+    .month-day.today {
+      background: rgba(0, 212, 255, 0.08);
+      box-shadow: inset 0 0 15px rgba(0, 212, 255, 0.1);
+    }
+
+    .month-day-number {
+      font-family: var(--font-hud);
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      margin-bottom: 4px;
+    }
+
+    .month-day.today .month-day-number {
+      color: var(--cyan);
+      text-shadow: 0 0 8px var(--cyan);
+    }
+
+    .month-event {
+      font-size: 0.6rem;
+      padding: 1px 4px;
+      margin-bottom: 2px;
+      border-radius: 2px;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      color: #fff;
+      border-left: 2px solid;
+    }
+
+    .month-more {
+      font-size: 0.6rem;
+      color: var(--text-dim);
+      margin-top: 2px;
+    }
+
+    /* ─── Sources Panel ───────────────────────────── */
+    .sources-panel {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 16px 20px;
+      box-shadow: 0 0 20px var(--cyan-glow);
+    }
+
+    .sources-title {
+      font-family: var(--font-hud);
+      font-size: 0.75rem;
+      color: var(--cyan);
+      letter-spacing: 0.15em;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .sources-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .source-card {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(0, 212, 255, 0.15);
+      border-radius: 4px;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 240px;
+      transition: border-color 0.2s;
+    }
+
+    .source-card:hover { border-color: var(--border); }
+
+    .source-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      box-shadow: 0 0 6px currentColor;
+    }
+
+    .source-info { flex: 1; min-width: 0; }
+    .source-name { font-weight: bold; font-size: 0.85rem; }
+    .source-meta { font-size: 0.7rem; color: var(--text-dim); }
+
+    .source-delete {
+      background: none;
+      border: 1px solid rgba(255, 51, 85, 0.3);
+      color: var(--red);
+      font-size: 0.7rem;
+      padding: 3px 8px;
+      border-radius: 3px;
+      cursor: pointer;
+      opacity: 0.5;
+      transition: opacity 0.2s;
+    }
+    .source-delete:hover { opacity: 1; }
+
+    .add-form { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; }
+
+    .form-group { display: flex; flex-direction: column; gap: 3px; }
+
+    .form-group label {
+      font-size: 0.65rem;
+      color: var(--text-dim);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .form-group input, .form-group select {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(0, 212, 255, 0.2);
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      padding: 6px 10px;
+      border-radius: 3px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .form-group input:focus, .form-group select:focus {
+      border-color: var(--cyan);
+      box-shadow: 0 0 8px var(--cyan-glow);
+    }
+
+    .form-group input[type="color"] { width: 36px; height: 30px; padding: 2px; cursor: pointer; }
+
+    .btn {
+      background: rgba(0, 212, 255, 0.15);
+      border: 1px solid var(--border);
+      color: var(--cyan);
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      padding: 6px 16px;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .btn:hover {
+      background: rgba(0, 212, 255, 0.3);
+      box-shadow: 0 0 12px var(--cyan-glow);
+    }
+
+    .btn-sync {
+      background: rgba(0, 255, 136, 0.1);
+      border-color: rgba(0, 255, 136, 0.3);
+      color: var(--green);
+    }
+    .btn-sync:hover {
+      background: rgba(0, 255, 136, 0.25);
+      box-shadow: 0 0 12px rgba(0, 255, 136, 0.15);
+    }
+
+    .btn-sync.syncing { opacity: 0.5; pointer-events: none; }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: var(--text-dim);
+    }
+
+    .loading::after {
+      content: '';
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      border: 2px solid var(--cyan-dim);
+      border-top-color: var(--cyan);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-left: 10px;
+      vertical-align: middle;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 700px) {
+      header { flex-direction: column; align-items: stretch; }
+      .add-form { flex-direction: column; }
+      .form-group input { width: 100%; }
+      .month-day { min-height: 60px; }
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- Header -->
+  <header>
+    <div class="header-left">
+      <div class="brand-title"><a href="/dashboard.html">J.A.R.V.I.S.</a></div>
+      <div class="page-label">AVAILABILITY</div>
+      <a href="/dashboard.html" class="nav-link">DASHBOARD</a>
+      <a href="/lists.html" class="nav-link">TASKS & LISTS</a>
+    </div>
+    <div class="header-controls">
+      <div class="view-switcher">
+        <button class="view-btn active" data-view="day" onclick="setView('day')">DAY</button>
+        <button class="view-btn" data-view="week" onclick="setView('week')">WEEK</button>
+        <button class="view-btn" data-view="month" onclick="setView('month')">MONTH</button>
+      </div>
+      <div class="date-nav">
+        <button onclick="navigate(-1)" title="Previous">&#9664;</button>
+        <button class="date-today-btn" onclick="goToday()">TODAY</button>
+        <div class="date-display" id="date-display">---</div>
+        <button onclick="navigate(1)" title="Next">&#9654;</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Timeline -->
+  <div class="timeline-container" id="timeline-container">
+    <div class="loading" id="loading">LOADING AVAILABILITY</div>
+  </div>
+
+  <!-- Sources -->
+  <div class="sources-panel">
+    <div class="sources-title">
+      CALENDAR SOURCES
+      <button class="btn btn-sync" id="sync-btn" onclick="syncAll()">SYNC NOW</button>
+    </div>
+    <div class="sources-list" id="sources-list"></div>
+    <div class="add-form" id="add-form">
+      <div style="display:flex; gap:8px; margin-bottom:8px;">
+        <button class="btn" id="tab-url" onclick="switchTab('url')" style="opacity:1">URL</button>
+        <button class="btn" id="tab-file" onclick="switchTab('file')" style="opacity:0.5">.ICS FILE</button>
+      </div>
+      <div id="url-form" style="display:flex; flex-wrap:wrap; align-items:end; gap:8px;">
+        <div class="form-group">
+          <label>Name</label>
+          <input type="text" id="src-name" placeholder="Work Calendar" style="width:160px" />
+        </div>
+        <div class="form-group">
+          <label>iCal URL</label>
+          <input type="url" id="src-url" placeholder="https://calendar.google.com/.../basic.ics" style="width:320px" />
+        </div>
+        <div class="form-group">
+          <label>Owner</label>
+          <select id="src-owner">
+            <option value="sir">Sir</option>
+            <option value="partner">Partner</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Color</label>
+          <input type="color" id="src-color" value="#00d4ff" />
+        </div>
+        <button class="btn" onclick="addSource()">+ ADD</button>
+      </div>
+      <div id="file-form" style="display:none; flex-wrap:wrap; align-items:end; gap:8px;">
+        <div class="form-group">
+          <label>Name</label>
+          <input type="text" id="file-name" placeholder="Work Calendar" style="width:160px" />
+        </div>
+        <div class="form-group">
+          <label>.ics File</label>
+          <input type="file" id="file-input" accept=".ics" style="color:var(--text); font-family:var(--font-mono); font-size:0.8rem;" />
+        </div>
+        <div class="form-group">
+          <label>Owner</label>
+          <select id="file-owner">
+            <option value="sir">Sir</option>
+            <option value="partner">Partner</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Color</label>
+          <input type="color" id="file-color" value="#7b2fff" />
+        </div>
+        <button class="btn" onclick="uploadFile()">&#11014; UPLOAD</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const START_HOUR = 8;
+const END_HOUR = 22;
+const HOUR_HEIGHT = 60;
+
+let currentDate = new Date().toISOString().split('T')[0];
+let currentView = 'day'; // day | week | month
+
+const DAYS_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const MONTHS_FULL = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+// ─── Date Helpers ─────────────────────────────
+function toDateStr(d) { return d.toISOString().split('T')[0]; }
+function parseDate(s) { return new Date(s + 'T12:00:00'); }
+function todayStr() { return new Date().toISOString().split('T')[0]; }
+
+function getWeekStart(dateStr) {
+  const d = parseDate(dateStr);
+  const day = d.getDay();
+  const diff = day === 0 ? 6 : day - 1; // Monday start
+  d.setDate(d.getDate() - diff);
+  return toDateStr(d);
+}
+
+function getWeekDays(dateStr) {
+  const start = parseDate(getWeekStart(dateStr));
+  const days = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(start);
+    d.setDate(d.getDate() + i);
+    days.push(toDateStr(d));
+  }
+  return days;
+}
+
+function getMonthDays(dateStr) {
+  const d = parseDate(dateStr);
+  const year = d.getFullYear();
+  const month = d.getMonth();
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+
+  // Start from Monday of the week containing the 1st
+  const startOffset = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
+  const start = new Date(firstDay);
+  start.setDate(start.getDate() - startOffset);
+
+  const days = [];
+  const current = new Date(start);
+  // Always show 6 weeks (42 days) for consistent grid
+  for (let i = 0; i < 42; i++) {
+    days.push({
+      date: toDateStr(current),
+      day: current.getDate(),
+      thisMonth: current.getMonth() === month,
+    });
+    current.setDate(current.getDate() + 1);
+  }
+  return days;
+}
+
+// ─── View Switching ───────────────────────────
+function setView(view) {
+  currentView = view;
+  document.querySelectorAll('.view-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.view === view);
+  });
+  updateDisplay();
+  loadData();
+}
+
+// ─── Navigation ───────────────────────────────
+function navigate(delta) {
+  const d = parseDate(currentDate);
+  if (currentView === 'day') {
+    d.setDate(d.getDate() + delta);
+  } else if (currentView === 'week') {
+    d.setDate(d.getDate() + (delta * 7));
+  } else {
+    d.setMonth(d.getMonth() + delta);
+  }
+  currentDate = toDateStr(d);
+  updateDisplay();
+  loadData();
+}
+
+function goToday() {
+  currentDate = todayStr();
+  updateDisplay();
+  loadData();
+}
+
+function updateDisplay() {
+  const d = parseDate(currentDate);
+  let text;
+  if (currentView === 'day') {
+    text = `${DAYS_SHORT[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+  } else if (currentView === 'week') {
+    const days = getWeekDays(currentDate);
+    const s = parseDate(days[0]);
+    const e = parseDate(days[6]);
+    if (s.getMonth() === e.getMonth()) {
+      text = `${s.getDate()} - ${e.getDate()} ${MONTHS[s.getMonth()]} ${s.getFullYear()}`;
+    } else {
+      text = `${s.getDate()} ${MONTHS[s.getMonth()]} - ${e.getDate()} ${MONTHS[e.getMonth()]} ${e.getFullYear()}`;
+    }
+  } else {
+    text = `${MONTHS_FULL[d.getMonth()]} ${d.getFullYear()}`;
+  }
+  document.getElementById('date-display').textContent = text;
+}
+
+// ─── Data Loading ─────────────────────────────
+async function loadData() {
+  const container = document.getElementById('timeline-container');
+  container.innerHTML = '<div class="loading">LOADING AVAILABILITY</div>';
+
+  try {
+    let eventsData, availabilityData;
+
+    if (currentView === 'day') {
+      const [avRes, srcRes] = await Promise.all([
+        fetch(`/api/availability?date=${currentDate}`).then(r => r.json()),
+        fetch('/api/calendars').then(r => r.json()),
+      ]);
+      eventsData = avRes.events || [];
+      availabilityData = avRes.availability || { owners: {}, freeSlots: {} };
+      renderDayView(eventsData, availabilityData);
+      renderSources(srcRes.data || []);
+    } else if (currentView === 'week') {
+      const days = getWeekDays(currentDate);
+      const [rangeRes, srcRes] = await Promise.all([
+        fetch(`/api/events-range?start=${days[0]}&end=${days[6]}`).then(r => r.json()),
+        fetch('/api/calendars').then(r => r.json()),
+      ]);
+      renderWeekView(days, rangeRes.events || []);
+      renderSources(srcRes.data || []);
+    } else {
+      const monthDays = getMonthDays(currentDate);
+      const startDate = monthDays[0].date;
+      const endDate = monthDays[monthDays.length - 1].date;
+      const [rangeRes, srcRes] = await Promise.all([
+        fetch(`/api/events-range?start=${startDate}&end=${endDate}`).then(r => r.json()),
+        fetch('/api/calendars').then(r => r.json()),
+      ]);
+      renderMonthView(monthDays, rangeRes.events || []);
+      renderSources(srcRes.data || []);
+    }
+  } catch (err) {
+    container.innerHTML = '<div class="no-events"><span class="icon">&#9888;</span>Failed to load data</div>';
+    console.error(err);
+  }
+}
+
+// ─── Day View ─────────────────────────────────
+function renderDayView(events, availability) {
+  const container = document.getElementById('timeline-container');
+
+  const ownerSet = new Set();
+  events.forEach(e => ownerSet.add(e.owner || 'sir'));
+  ownerSet.add('sir');
+  ownerSet.add('partner');
+  const owners = Array.from(ownerSet);
+
+  const gridCols = `70px ${'1fr '.repeat(owners.length)}50px`;
+
+  const eventsByOwner = {};
+  owners.forEach(o => eventsByOwner[o] = []);
+  events.forEach(e => {
+    const owner = e.owner || 'sir';
+    if (eventsByOwner[owner]) eventsByOwner[owner].push(e);
+  });
+
+  const mutualFreeHours = new Set();
+  if (owners.length >= 2) {
+    const slotsA = availability.freeSlots[owners[0]] || [];
+    const slotsB = availability.freeSlots[owners[1]] || [];
+    for (const sa of slotsA) {
+      for (const sb of slotsB) {
+        const start = sa.start > sb.start ? sa.start : sb.start;
+        const end = sa.end < sb.end ? sa.end : sb.end;
+        if (start < end) {
+          const sh = parseInt(start.split(':')[0], 10);
+          const eh = parseInt(end.split(':')[0], 10);
+          for (let h = sh; h < eh; h++) mutualFreeHours.add(h);
+          if (parseInt(end.split(':')[1], 10) > 0) mutualFreeHours.add(eh);
+        }
+      }
+    }
+  }
+
+  let html = '';
+  html += `<div class="timeline-header" style="grid-template-columns: ${gridCols}">`;
+  html += `<div class="timeline-header-cell">TIME</div>`;
+  owners.forEach(o => {
+    html += `<div class="timeline-header-cell">${o.toUpperCase()}</div>`;
+  });
+  html += `<div class="timeline-header-cell mutual-header">&#10003;</div>`;
+  html += '</div>';
+
+  html += '<div class="timeline-body">';
+  for (let h = START_HOUR; h < END_HOUR; h++) {
+    const hourStr = String(h).padStart(2, '0') + ':00';
+    const isMutualFree = mutualFreeHours.has(h);
+    html += `<div class="time-row ${isMutualFree ? 'mutual-free-row' : ''}" style="grid-template-columns: ${gridCols}; height: ${HOUR_HEIGHT}px;">`;
+    html += `<div class="time-cell">${hourStr}</div>`;
+
+    owners.forEach(owner => {
+      html += `<div class="person-cell">`;
+      const ownerEvts = eventsByOwner[owner] || [];
+      ownerEvts.forEach(evt => {
+        if (evt.all_day) return;
+        const eStart = evt.start_time.slice(11, 16) || '00:00';
+        const eEnd = evt.end_time.slice(11, 16) || '23:59';
+        const eStartH = parseInt(eStart.split(':')[0], 10);
+        const eStartM = parseInt(eStart.split(':')[1], 10);
+        const eEndH = parseInt(eEnd.split(':')[0], 10);
+        const eEndM = parseInt(eEnd.split(':')[1], 10);
+        if (eStartH !== h) return;
+        const topOffset = (eStartM / 60) * HOUR_HEIGHT;
+        const durationMin = (eEndH * 60 + eEndM) - (eStartH * 60 + eStartM);
+        const height = Math.max((durationMin / 60) * HOUR_HEIGHT, 20);
+        const color = evt.color || '#00d4ff';
+        html += `<div class="event-block" style="
+          top: ${topOffset}px; height: ${height}px;
+          background: ${hexToRgba(color, 0.25)};
+          border-left-color: ${color};
+        ">
+          <span class="event-time">${eStart} - ${eEnd}</span>
+          <span class="event-title">${escapeHtml(evt.title)}</span>
+        </div>`;
+      });
+      html += '</div>';
+    });
+
+    html += `<div class="mutual-cell">`;
+    if (isMutualFree) html += `<span class="mutual-free">&#10003;</span>`;
+    html += `</div></div>`;
+  }
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+// ─── Week View ────────────────────────────────
+function renderWeekView(days, events) {
+  const container = document.getElementById('timeline-container');
+  const today = todayStr();
+  const gridCols = `70px repeat(7, 1fr)`;
+
+  // Group events by date
+  const eventsByDate = {};
+  days.forEach(d => eventsByDate[d] = []);
+
+  events.forEach(evt => {
+    // Multi-day event: place on each day it spans
+    const evtStartDate = evt.start_time.slice(0, 10);
+    const evtEndDate = evt.end_time.slice(0, 10);
+    days.forEach(d => {
+      if (d >= evtStartDate && d <= evtEndDate) {
+        if (!eventsByDate[d]) eventsByDate[d] = [];
+        eventsByDate[d].push(evt);
+      }
+    });
+  });
+
+  let html = '';
+  // Header: day names with dates
+  html += `<div class="timeline-header" style="grid-template-columns: ${gridCols}">`;
+  html += `<div class="timeline-header-cell">TIME</div>`;
+  days.forEach(d => {
+    const dd = parseDate(d);
+    const isToday = d === today;
+    html += `<div class="timeline-header-cell ${isToday ? 'today-col' : ''}">
+      ${DAYS_SHORT[dd.getDay()]} ${dd.getDate()}/${dd.getMonth() + 1}
+    </div>`;
+  });
+  html += '</div>';
+
+  // Body: time rows
+  html += '<div class="timeline-body">';
+  for (let h = START_HOUR; h < END_HOUR; h++) {
+    const hourStr = String(h).padStart(2, '0') + ':00';
+    html += `<div class="time-row" style="grid-template-columns: ${gridCols}; height: ${HOUR_HEIGHT}px;">`;
+    html += `<div class="time-cell">${hourStr}</div>`;
+
+    days.forEach(d => {
+      const isToday = d === today;
+      html += `<div class="day-cell ${isToday ? 'today-col' : ''}">`;
+      const dayEvents = eventsByDate[d] || [];
+      dayEvents.forEach(evt => {
+        if (evt.all_day) return;
+        // For multi-day events, clamp display times to the current day
+        const evtStartDate = evt.start_time.slice(0, 10);
+        const evtEndDate = evt.end_time.slice(0, 10);
+        const eStart = evtStartDate < d ? '00:00' : (evt.start_time.slice(11, 16) || '00:00');
+        const eEnd = evtEndDate > d ? '23:59' : (evt.end_time.slice(11, 16) || '23:59');
+        const eStartH = parseInt(eStart.split(':')[0], 10);
+        const eStartM = parseInt(eStart.split(':')[1], 10);
+        const eEndH = parseInt(eEnd.split(':')[0], 10);
+        const eEndM = parseInt(eEnd.split(':')[1], 10);
+        if (eStartH !== h) return;
+        const topOffset = (eStartM / 60) * HOUR_HEIGHT;
+        const durationMin = (eEndH * 60 + eEndM) - (eStartH * 60 + eStartM);
+        const height = Math.max((durationMin / 60) * HOUR_HEIGHT, 18);
+        const color = evt.color || '#00d4ff';
+        html += `<div class="event-block" style="
+          top: ${topOffset}px; height: ${height}px;
+          background: ${hexToRgba(color, 0.25)};
+          border-left-color: ${color};
+        ">
+          <span class="event-title">${escapeHtml(evt.title)}</span>
+        </div>`;
+      });
+      html += '</div>';
+    });
+
+    html += '</div>';
+  }
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+// ─── Month View ───────────────────────────────
+function renderMonthView(monthDays, events) {
+  const container = document.getElementById('timeline-container');
+  const today = todayStr();
+
+  // Group events by date
+  const eventsByDate = {};
+  events.forEach(evt => {
+    const evtStartDate = evt.start_time.slice(0, 10);
+    const evtEndDate = evt.end_time.slice(0, 10);
+    // Spread across all days the event spans
+    const s = parseDate(evtStartDate);
+    const e = parseDate(evtEndDate);
+    for (let d = new Date(s); d <= e; d.setDate(d.getDate() + 1)) {
+      const ds = toDateStr(d);
+      if (!eventsByDate[ds]) eventsByDate[ds] = [];
+      eventsByDate[ds].push(evt);
+    }
+  });
+
+  let html = '<div class="month-grid">';
+
+  // Header row
+  const dayNames = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+  dayNames.forEach(n => {
+    html += `<div class="month-header-cell">${n}</div>`;
+  });
+
+  // Day cells
+  monthDays.forEach(md => {
+    const isToday = md.date === today;
+    const dayEvents = eventsByDate[md.date] || [];
+    html += `<div class="month-day ${md.thisMonth ? '' : 'other-month'} ${isToday ? 'today' : ''}" onclick="jumpToDay('${md.date}')">`;
+    html += `<div class="month-day-number">${md.day}</div>`;
+
+    const maxShow = 3;
+    dayEvents.slice(0, maxShow).forEach(evt => {
+      const color = evt.color || '#00d4ff';
+      const time = evt.all_day ? '' : evt.start_time.slice(11, 16) + ' ';
+      html += `<div class="month-event" style="background:${hexToRgba(color, 0.25)}; border-left-color:${color};">
+        ${time}${escapeHtml(evt.title)}
+      </div>`;
+    });
+
+    if (dayEvents.length > maxShow) {
+      html += `<div class="month-more">+${dayEvents.length - maxShow} more</div>`;
+    }
+
+    html += '</div>';
+  });
+
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function jumpToDay(dateStr) {
+  currentDate = dateStr;
+  setView('day');
+}
+
+// ─── Sources Rendering ────────────────────────
+function renderSources(sources) {
+  const list = document.getElementById('sources-list');
+  if (sources.length === 0) {
+    list.innerHTML = '<div style="color: var(--text-dim); font-size: 0.85rem;">No calendar sources added yet. Add one below.</div>';
+    return;
+  }
+
+  list.innerHTML = sources.map(s => `
+    <div class="source-card">
+      <div class="source-dot" style="color: ${s.color}; background: ${s.color}"></div>
+      <div class="source-info">
+        <div class="source-name">${escapeHtml(s.name)}</div>
+        <div class="source-meta">${s.owner} &middot; synced: ${s.last_synced ? s.last_synced.slice(0, 16) : 'never'}</div>
+      </div>
+      <button class="source-delete" onclick="deleteSource(${s.id})">DEL</button>
+    </div>
+  `).join('');
+}
+
+// ─── Actions ──────────────────────────────────
+async function addSource() {
+  const name = document.getElementById('src-name').value.trim();
+  const url = document.getElementById('src-url').value.trim();
+  const owner = document.getElementById('src-owner').value;
+  const color = document.getElementById('src-color').value;
+  if (!name || !url) return alert('Name and URL are required.');
+  try {
+    await fetch('/api/calendars', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, url, owner, color }),
+    });
+    document.getElementById('src-name').value = '';
+    document.getElementById('src-url').value = '';
+    loadData();
+  } catch (err) { alert('Failed to add source.'); }
+}
+
+function switchTab(tab) {
+  document.getElementById('url-form').style.display = tab === 'url' ? 'flex' : 'none';
+  document.getElementById('file-form').style.display = tab === 'file' ? 'flex' : 'none';
+  document.getElementById('tab-url').style.opacity = tab === 'url' ? '1' : '0.5';
+  document.getElementById('tab-file').style.opacity = tab === 'file' ? '1' : '0.5';
+}
+
+async function uploadFile() {
+  const name = document.getElementById('file-name').value.trim();
+  const fileInput = document.getElementById('file-input');
+  const owner = document.getElementById('file-owner').value;
+  const color = document.getElementById('file-color').value;
+  if (!fileInput.files[0]) return alert('.ics file is required.');
+  const formData = new FormData();
+  formData.append('file', fileInput.files[0]);
+  formData.append('name', name || fileInput.files[0].name.replace('.ics', ''));
+  formData.append('owner', owner);
+  formData.append('color', color);
+  try {
+    const res = await fetch('/api/calendars/upload', { method: 'POST', body: formData });
+    const data = await res.json();
+    if (data.success) {
+      document.getElementById('file-name').value = '';
+      fileInput.value = '';
+      alert(`Imported ${data.imported} events.`);
+      loadData();
+    } else { alert('Upload failed: ' + (data.error || 'unknown')); }
+  } catch (err) { alert('Upload failed.'); }
+}
+
+async function deleteSource(id) {
+  if (!confirm('Delete this calendar source?')) return;
+  try {
+    await fetch(`/api/calendars/${id}`, { method: 'DELETE' });
+    loadData();
+  } catch (err) { alert('Failed to delete source.'); }
+}
+
+async function syncAll() {
+  const btn = document.getElementById('sync-btn');
+  btn.textContent = 'SYNCING...';
+  btn.classList.add('syncing');
+  try {
+    const res = await fetch('/api/calendars/sync', { method: 'POST' });
+    const data = await res.json();
+    btn.textContent = `SYNCED (${data.synced || 0})`;
+    setTimeout(() => { btn.textContent = 'SYNC NOW'; btn.classList.remove('syncing'); }, 2000);
+    loadData();
+  } catch (err) {
+    btn.textContent = 'SYNC FAILED';
+    btn.classList.remove('syncing');
+    setTimeout(() => { btn.textContent = 'SYNC NOW'; }, 2000);
+  }
+}
+
+// ─── Helpers ──────────────────────────────────
+function hexToRgba(hex, alpha) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+function escapeHtml(str) {
+  const el = document.createElement('span');
+  el.textContent = str;
+  return el.innerHTML;
+}
+
+// ─── Init ─────────────────────────────────────
+updateDisplay();
+loadData();
+</script>
+</body>
+</html>

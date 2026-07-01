@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>J.A.R.V.I.S. — Tasks & Lists</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0a0e1a;
+      --cyan:      #00d4ff;
+      --cyan-dim:  rgba(0, 212, 255, 0.15);
+      --cyan-glow: rgba(0, 212, 255, 0.08);
+      --purple:    #7b2fff;
+      --orange:    #ff6b35;
+      --green:     #00ff88;
+      --red:       #ff3355;
+      --yellow:    #ffd700;
+      --text:      #c8e6f0;
+      --text-dim:  #5a7a8a;
+      --border:    rgba(0, 212, 255, 0.25);
+      --font-mono: 'Share Tech Mono', monospace;
+      --font-hud:  'Orbitron', sans-serif;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 16px;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none; z-index: 0;
+    }
+    body::after {
+      content: '';
+      position: fixed; inset: 0;
+      background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px);
+      pointer-events: none; z-index: 0;
+    }
+
+    #app {
+      position: relative; z-index: 1;
+      min-height: 100vh;
+      display: flex; flex-direction: column;
+      padding: 12px; gap: 12px;
+    }
+
+    /* ---- Header ---- */
+    header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 20px;
+      background: rgba(0,0,0,0.4);
+      border: 1px solid var(--border); border-radius: 4px;
+      box-shadow: 0 0 30px var(--cyan-glow), inset 0 0 30px rgba(0,0,0,0.5);
+      flex-wrap: wrap; gap: 12px;
+    }
+    .header-left { display: flex; align-items: center; gap: 16px; }
+    .brand-title {
+      font-family: var(--font-hud); font-size: 1.3rem; font-weight: 700;
+      color: var(--cyan); text-shadow: 0 0 20px var(--cyan); letter-spacing: 0.15em;
+    }
+    .brand-title a { color: inherit; text-decoration: none; }
+    .page-label {
+      font-family: var(--font-hud); font-size: 0.75rem; color: var(--text-dim);
+      letter-spacing: 0.2em; border-left: 1px solid var(--border); padding-left: 16px;
+    }
+    .nav-links { display: flex; gap: 16px; }
+    .nav-link {
+      color: var(--cyan); text-decoration: none; font-family: var(--font-hud);
+      font-size: 0.7rem; letter-spacing: 0.1em; opacity: 0.7; transition: opacity 0.2s;
+    }
+    .nav-link:hover { opacity: 1; }
+
+    /* ---- 3-Column Grid ---- */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px; flex: 1;
+    }
+    @media (max-width: 1100px) { .main-grid { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 700px) { .main-grid { grid-template-columns: 1fr; } }
+
+    /* ---- Card ---- */
+    .card {
+      position: relative;
+      background: rgba(0,0,0,0.35);
+      border: 1px solid var(--border); border-radius: 4px;
+      padding: 16px; display: flex; flex-direction: column; gap: 10px;
+      box-shadow: 0 0 20px var(--cyan-glow);
+      animation: card-in 0.4s ease-out both;
+    }
+    .card .corner-tl, .card .corner-br {
+      position: absolute; width: 12px; height: 12px;
+      border-color: var(--cyan); border-style: solid;
+    }
+    .card .corner-tl { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
+    .card .corner-br { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
+    @keyframes card-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+    .card-header {
+      display: flex; align-items: center; justify-content: space-between;
+      font-family: var(--font-hud); font-size: 1rem; font-weight: 700;
+      color: var(--cyan); letter-spacing: 0.15em;
+      text-shadow: 0 0 8px var(--cyan-glow);
+      border-bottom: 1px solid var(--border); padding-bottom: 8px;
+    }
+    .card-header .count { font-size: 0.8rem; color: var(--text-dim); font-weight: 400; }
+    .card-header .badge {
+      font-size: 0.5rem; color: var(--green); font-family: var(--font-mono);
+      letter-spacing: 0; background: rgba(0,255,136,0.1); padding: 2px 6px;
+      border-radius: 3px; border: 1px solid rgba(0,255,136,0.2);
+    }
+
+    .card-body { flex: 1; overflow-y: auto; max-height: 70vh; }
+    .card-body::-webkit-scrollbar { width: 4px; }
+    .card-body::-webkit-scrollbar-track { background: transparent; }
+    .card-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    /* ---- Source tabs ---- */
+    .source-tabs { display: flex; gap: 2px; margin-bottom: 4px; }
+    .source-tab {
+      background: rgba(0,0,0,0.3); border: 1px solid var(--border);
+      color: var(--text-dim); font-family: var(--font-hud); font-size: 0.7rem;
+      letter-spacing: 0.08em; padding: 6px 12px; border-radius: 3px;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .source-tab:hover { color: var(--cyan); background: rgba(0,212,255,0.08); }
+    .source-tab.active {
+      color: var(--cyan); background: rgba(0,212,255,0.2);
+      border-color: var(--cyan); text-shadow: 0 0 8px var(--cyan);
+    }
+
+    /* ---- Items ---- */
+    .item-row {
+      display: flex; align-items: center; gap: 8px;
+      padding: 12px 12px;
+      border-bottom: 1px solid rgba(0,212,255,0.07);
+      transition: background 0.2s;
+    }
+    .item-row:hover { background: rgba(0,212,255,0.04); }
+    .item-row.checked .item-text { text-decoration: line-through; opacity: 0.35; }
+    .item-row.completed .item-text { text-decoration: line-through; opacity: 0.35; }
+
+    .item-text { flex: 1; font-size: 1.05rem; }
+    .item-meta { font-size: 0.8rem; color: var(--text-dim); white-space: nowrap; }
+    .item-source {
+      font-size: 0.7rem; color: var(--text-dim); background: rgba(0,212,255,0.06);
+      padding: 1px 5px; border-radius: 2px; letter-spacing: 0.05em;
+    }
+
+    .priority-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .priority-dot.high { background: var(--red); box-shadow: 0 0 6px var(--red); }
+    .priority-dot.normal { background: var(--cyan); box-shadow: 0 0 6px var(--cyan); }
+    .priority-dot.low { background: var(--text-dim); }
+
+    .checkbox {
+      width: 22px; height: 22px; border: 1px solid var(--border); border-radius: 2px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; transition: all 0.2s; font-size: 14px; color: var(--green);
+      cursor: pointer;
+    }
+    .item-row.checked .checkbox {
+      border-color: var(--green); background: rgba(0,255,136,0.15);
+    }
+
+    .btn-icon {
+      background: transparent; border: 1px solid transparent;
+      color: var(--text-dim); font-size: 1.1rem; cursor: pointer;
+      padding: 6px 8px; border-radius: 3px; transition: all 0.2s; flex-shrink: 0;
+    }
+    .btn-icon.complete:hover { color: var(--green); border-color: var(--green); background: rgba(0,255,136,0.1); }
+    .btn-icon.delete:hover { color: var(--red); border-color: var(--red); background: rgba(255,51,85,0.1); }
+
+    /* ---- Add Row ---- */
+    .add-row {
+      display: flex; gap: 8px; margin-top: 6px;
+      padding-top: 8px; border-top: 1px solid var(--border);
+    }
+    .add-input {
+      flex: 1; background: rgba(0,0,0,0.4); border: 1px solid var(--border);
+      border-radius: 3px; color: var(--text); font-family: var(--font-mono);
+      font-size: 1rem; padding: 10px 14px; outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .add-input:focus { border-color: var(--cyan); box-shadow: 0 0 8px var(--cyan-glow); }
+    .add-input::placeholder { color: var(--text-dim); }
+    .btn-add {
+      background: rgba(0,212,255,0.1); border: 1px solid var(--border);
+      color: var(--cyan); font-family: var(--font-hud); font-size: 0.85rem;
+      letter-spacing: 0.1em; padding: 10px 18px; border-radius: 3px;
+      cursor: pointer; transition: all 0.2s; white-space: nowrap;
+    }
+    .btn-add:hover { background: rgba(0,212,255,0.25); box-shadow: 0 0 10px var(--cyan-glow); }
+
+    /* ---- Section Divider ---- */
+    .section-divider {
+      font-family: var(--font-hud); font-size: 0.7rem; color: var(--text-dim);
+      letter-spacing: 0.15em; margin-top: 12px; margin-bottom: 4px;
+      padding: 4px 0; border-top: 1px solid rgba(0,212,255,0.1);
+    }
+
+    /* ---- List Tabs ---- */
+    .list-tabs { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 4px; }
+    .list-tab {
+      background: rgba(0,0,0,0.3); border: 1px solid var(--border);
+      color: var(--text-dim); font-family: var(--font-hud); font-size: 0.7rem;
+      letter-spacing: 0.08em; padding: 6px 12px; border-radius: 3px;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .list-tab:hover { color: var(--cyan); background: rgba(0,212,255,0.08); }
+    .list-tab.active {
+      color: var(--cyan); background: rgba(0,212,255,0.2);
+      border-color: var(--cyan); text-shadow: 0 0 8px var(--cyan);
+    }
+
+    .empty-state {
+      color: var(--text-dim); font-size: 0.8rem; text-align: center;
+      padding: 30px 10px; letter-spacing: 0.1em;
+    }
+
+    /* ---- Toast ---- */
+    .toast {
+      position: fixed; bottom: 20px; right: 20px;
+      background: rgba(0,0,0,0.85); border: 1px solid var(--green);
+      color: var(--green); padding: 10px 20px; border-radius: 4px;
+      font-family: var(--font-mono); font-size: 0.85rem; z-index: 9999;
+      animation: toast-in 0.3s ease-out; box-shadow: 0 0 15px rgba(0,255,136,0.2);
+    }
+    .toast.error { border-color: var(--red); color: var(--red); box-shadow: 0 0 15px rgba(255,51,85,0.2); }
+    @keyframes toast-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <header>
+    <div class="header-left">
+      <div class="brand-title"><a href="/dashboard.html">J.A.R.V.I.S.</a></div>
+      <div class="page-label">TASKS & LISTS</div>
+    </div>
+    <div class="nav-links">
+      <a href="/dashboard.html" class="nav-link">DASHBOARD</a>
+      <a href="/availability.html" class="nav-link">AVAILABILITY</a>
+    </div>
+  </header>
+
+  <div class="main-grid">
+
+    <!-- Card 1: YAPILACAKLAR (JARVIS tasks + AnyList Todo) -->
+    <div class="card" style="animation-delay: 0.05s">
+      <div class="corner-tl"></div>
+      <div class="corner-br"></div>
+      <div class="card-header">
+        YAPILACAKLAR
+        <span class="count" id="tasks-count">0</span>
+      </div>
+      <div class="card-body" id="tasks-body">
+        <div class="empty-state">LOADING...</div>
+      </div>
+      <div class="add-row">
+        <input class="add-input" id="task-input" placeholder="New task..." />
+        <select id="task-target" style="background:rgba(0,0,0,0.4); border:1px solid var(--border); color:var(--text-dim); font-family:var(--font-mono); font-size:0.75rem; padding:4px 6px; border-radius:3px; outline:none;">
+          <option value="jarvis">JARVIS</option>
+          <option value="anylist">AnyList</option>
+        </select>
+        <button class="btn-add" onclick="addTask()">+ ADD</button>
+      </div>
+    </div>
+
+    <!-- Card 2: ALISVERIS (AnyList Home) -->
+    <div class="card" style="animation-delay: 0.1s">
+      <div class="corner-tl"></div>
+      <div class="corner-br"></div>
+      <div class="card-header">
+        <span style="display:flex; align-items:center; gap:8px;">
+          ALISVERIS
+          <span class="badge" id="shop-badge" style="display:none">ANYLIST</span>
+        </span>
+        <span class="count" id="shop-count">0</span>
+      </div>
+      <div class="card-body" id="shop-body">
+        <div class="empty-state">LOADING...</div>
+      </div>
+      <div class="add-row">
+        <input class="add-input" id="shop-input" placeholder="Add item..." />
+        <button class="btn-add" onclick="addShopItem()">+ ADD</button>
+      </div>
+    </div>
+
+    <!-- Card 3: ANYLIST (browse all lists) -->
+    <div class="card" style="animation-delay: 0.15s">
+      <div class="corner-tl"></div>
+      <div class="corner-br"></div>
+      <div class="card-header">
+        <span style="display:flex; align-items:center; gap:8px;">
+          ANYLIST
+          <span class="badge" id="anylist-badge" style="display:none">CONNECTED</span>
+        </span>
+        <span class="count" id="anylist-count">0</span>
+      </div>
+      <div class="list-tabs" id="anylist-tabs"></div>
+      <div class="card-body" id="anylist-body">
+        <div class="empty-state">LOADING...</div>
+      </div>
+      <div class="add-row">
+        <input class="add-input" id="anylist-input" placeholder="Add item to list..." />
+        <button class="btn-add" onclick="addAnyListItem()">+ ADD</button>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+// ---- State ----
+let jarvisTasks = [];
+let anylistTodoItems = [];
+let anylistHomeItems = [];
+let anylistLists = [];
+let activeAnyListName = null;
+let anylistConnected = false;
+
+const ANYLIST_TODO = 'Todo';
+const ANYLIST_HOME = 'Home';
+const EXCLUDED_LISTS = [ANYLIST_TODO, ANYLIST_HOME]; // shown in dedicated cards
+
+// ---- Helpers ----
+function escHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+function toast(msg, isError = false) {
+  const el = document.createElement('div');
+  el.className = 'toast' + (isError ? ' error' : '');
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 2500);
+}
+
+// ---- Load Data ----
+async function loadAll() {
+  await Promise.all([loadTasks(), loadShopping(), loadAnyList()]);
+}
+
+async function loadTasks() {
+  try {
+    const res = await fetch('/api/tasks/all').then(r => r.json());
+    jarvisTasks = res.data || [];
+  } catch (err) { jarvisTasks = []; }
+
+  // Also get AnyList Todo
+  if (anylistConnected) {
+    try {
+      const res = await fetch(`/api/anylist/lists/${encodeURIComponent(ANYLIST_TODO)}`).then(r => r.json());
+      anylistTodoItems = res.success && res.data ? res.data.items : [];
+    } catch { anylistTodoItems = []; }
+  }
+
+  renderTasks();
+}
+
+async function loadShopping() {
+  if (!anylistConnected) {
+    // Fallback to local JARVIS list
+    try {
+      const res = await fetch('/api/lists').then(r => r.json());
+      const list = (res.data || []).find(l => l.name === 'alışveriş');
+      anylistHomeItems = list ? list.items.map(i => ({
+        id: i.id, name: i.content, checked: !!i.checked, quantity: '', _local: true
+      })) : [];
+    } catch { anylistHomeItems = []; }
+    renderShopping();
+    return;
+  }
+
+  try {
+    const res = await fetch(`/api/anylist/lists/${encodeURIComponent(ANYLIST_HOME)}`).then(r => r.json());
+    anylistHomeItems = res.success && res.data ? res.data.items : [];
+  } catch { anylistHomeItems = []; }
+  renderShopping();
+}
+
+async function loadAnyList() {
+  try {
+    const statusRes = await fetch('/api/anylist/status').then(r => r.json());
+    anylistConnected = statusRes.connected;
+  } catch { anylistConnected = false; }
+
+  if (!anylistConnected) {
+    document.getElementById('anylist-badge').style.display = 'none';
+    document.getElementById('shop-badge').style.display = 'none';
+    document.getElementById('anylist-body').innerHTML = '<div class="empty-state">ANYLIST NOT CONNECTED<br><span style="font-size:0.7rem; opacity:0.6;">Add credentials to .env</span></div>';
+    document.getElementById('anylist-tabs').innerHTML = '';
+    document.getElementById('anylist-count').textContent = '';
+    return;
+  }
+
+  document.getElementById('anylist-badge').style.display = 'inline';
+  document.getElementById('shop-badge').style.display = 'inline';
+
+  try {
+    const res = await fetch('/api/anylist/lists').then(r => r.json());
+    const allLists = res.success ? res.data : [];
+
+    // Filter out Todo and Home (they have their own cards)
+    anylistLists = allLists.filter(l => !EXCLUDED_LISTS.includes(l.name));
+
+    if (!activeAnyListName && anylistLists.length > 0) {
+      activeAnyListName = anylistLists[0].name;
+    }
+
+    // Also refresh Todo + Home data
+    const todoList = allLists.find(l => l.name === ANYLIST_TODO);
+    anylistTodoItems = todoList ? todoList.items : [];
+
+    const homeList = allLists.find(l => l.name === ANYLIST_HOME);
+    anylistHomeItems = homeList ? homeList.items : [];
+
+    document.getElementById('anylist-count').textContent = anylistLists.length + ' LISTS';
+    renderTasks();
+    renderShopping();
+    renderAnyListTabs();
+    renderAnyListItems();
+  } catch (err) {
+    console.error('AnyList load error:', err);
+  }
+}
+
+// ---- Render: YAPILACAKLAR ----
+function renderTasks() {
+  const body = document.getElementById('tasks-body');
+  const pending = jarvisTasks.filter(t => t.status === 'pending');
+  const completed = jarvisTasks.filter(t => t.status === 'completed');
+  const anylistUnchecked = anylistTodoItems.filter(i => !i.checked);
+  const anylistChecked = anylistTodoItems.filter(i => i.checked);
+
+  const totalPending = pending.length + anylistUnchecked.length;
+  document.getElementById('tasks-count').textContent = totalPending + ' PENDING';
+
+  if (pending.length === 0 && anylistUnchecked.length === 0 && completed.length === 0 && anylistChecked.length === 0) {
+    body.innerHTML = '<div class="empty-state">NO TASKS</div>';
+    return;
+  }
+
+  let html = '';
+
+  // JARVIS pending tasks
+  pending.forEach(t => {
+    const pClass = t.priority || 'normal';
+    html += `<div class="item-row" data-id="${t.id}">
+      <span class="priority-dot ${pClass}"></span>
+      <span class="item-text">${escHtml(t.title)}</span>
+      ${t.due_date ? `<span class="item-meta">${t.due_date.slice(5, 10)}</span>` : ''}
+      <span class="item-source">JARVIS</span>
+      <button class="btn-icon complete" onclick="completeTask(${t.id})" title="Complete">&#10003;</button>
+      <button class="btn-icon delete" onclick="deleteTask(${t.id})" title="Delete">&#10007;</button>
+    </div>`;
+  });
+
+  // AnyList Todo unchecked
+  anylistUnchecked.forEach(i => {
+    html += `<div class="item-row">
+      <span class="priority-dot normal"></span>
+      <span class="item-text">${escHtml(i.name)}</span>
+      <span class="item-source">ANYLIST</span>
+      <button class="btn-icon complete" onclick="toggleAnyListTodo('${i.id}')" title="Check">&#10003;</button>
+      <button class="btn-icon delete" onclick="removeAnyListTodo('${i.id}')" title="Delete">&#10007;</button>
+    </div>`;
+  });
+
+  // Completed section
+  const allCompleted = [
+    ...completed.map(t => ({ ...t, _source: 'jarvis' })),
+    ...anylistChecked.map(i => ({ ...i, _source: 'anylist' })),
+  ];
+
+  if (allCompleted.length > 0) {
+    html += '<div class="section-divider">COMPLETED</div>';
+    allCompleted.slice(0, 8).forEach(t => {
+      if (t._source === 'jarvis') {
+        html += `<div class="item-row completed">
+          <span class="priority-dot low"></span>
+          <span class="item-text">${escHtml(t.title)}</span>
+          <span class="item-source">JARVIS</span>
+          <button class="btn-icon delete" onclick="deleteTask(${t.id})">&#10007;</button>
+        </div>`;
+      } else {
+        html += `<div class="item-row checked">
+          <span class="priority-dot low"></span>
+          <span class="item-text">${escHtml(t.name)}</span>
+          <span class="item-source">ANYLIST</span>
+          <button class="btn-icon delete" onclick="removeAnyListTodo('${t.id}')">&#10007;</button>
+        </div>`;
+      }
+    });
+  }
+
+  body.innerHTML = html;
+}
+
+// ---- Render: ALISVERIS ----
+function renderShopping() {
+  const body = document.getElementById('shop-body');
+  const unchecked = anylistHomeItems.filter(i => !i.checked);
+  const checked = anylistHomeItems.filter(i => i.checked);
+
+  document.getElementById('shop-count').textContent = unchecked.length + ' ITEMS';
+
+  if (anylistHomeItems.length === 0) {
+    body.innerHTML = '<div class="empty-state">LIST IS EMPTY</div>';
+    return;
+  }
+
+  let html = '';
+  // Unchecked first
+  unchecked.forEach(i => {
+    const isLocal = i._local;
+    html += `<div class="item-row" onclick="${isLocal ? `toggleLocalItem(${i.id})` : `toggleShopItem('${i.id}')`}" style="cursor:pointer">
+      <div class="checkbox"></div>
+      <span class="item-text">${escHtml(i.name)}</span>
+      ${i.quantity ? `<span class="item-meta">${escHtml(i.quantity)}</span>` : ''}
+      <button class="btn-icon delete" onclick="event.stopPropagation(); ${isLocal ? `deleteLocalItem(${i.id})` : `removeShopItem('${i.id}')`}">&#10007;</button>
+    </div>`;
+  });
+
+  // Checked
+  checked.forEach(i => {
+    const isLocal = i._local;
+    html += `<div class="item-row checked" onclick="${isLocal ? `toggleLocalItem(${i.id})` : `toggleShopItem('${i.id}')`}" style="cursor:pointer">
+      <div class="checkbox">&#10003;</div>
+      <span class="item-text">${escHtml(i.name)}</span>
+      <button class="btn-icon delete" onclick="event.stopPropagation(); ${isLocal ? `deleteLocalItem(${i.id})` : `removeShopItem('${i.id}')`}">&#10007;</button>
+    </div>`;
+  });
+
+  body.innerHTML = html;
+}
+
+// ---- Render: ANYLIST ----
+function renderAnyListTabs() {
+  const tabsEl = document.getElementById('anylist-tabs');
+  tabsEl.innerHTML = anylistLists.map(l => {
+    const active = l.name === activeAnyListName ? ' active' : '';
+    const unchecked = l.items.filter(i => !i.checked).length;
+    return `<button class="list-tab${active}" onclick="switchAnyList('${escHtml(l.name)}')">${escHtml(l.name)} (${unchecked})</button>`;
+  }).join('');
+}
+
+function renderAnyListItems() {
+  const body = document.getElementById('anylist-body');
+  const list = anylistLists.find(l => l.name === activeAnyListName);
+
+  if (!list || list.items.length === 0) {
+    body.innerHTML = '<div class="empty-state">LIST IS EMPTY</div>';
+    return;
+  }
+
+  const sorted = [...list.items].sort((a, b) => (a.checked === b.checked) ? 0 : a.checked ? 1 : -1);
+
+  body.innerHTML = sorted.map(i => {
+    const cls = i.checked ? ' checked' : '';
+    const qty = i.quantity ? `<span class="item-meta">${escHtml(i.quantity)}</span>` : '';
+    return `<div class="item-row${cls}" onclick="toggleAnyListItem('${escHtml(activeAnyListName)}', '${i.id}')" style="cursor:pointer">
+      <div class="checkbox">${i.checked ? '&#10003;' : ''}</div>
+      <span class="item-text">${escHtml(i.name)}</span>
+      ${qty}
+      <button class="btn-icon delete" onclick="event.stopPropagation(); removeAnyListItem('${escHtml(activeAnyListName)}', '${i.id}')">&#10007;</button>
+    </div>`;
+  }).join('');
+}
+
+function switchAnyList(name) {
+  activeAnyListName = name;
+  renderAnyListTabs();
+  renderAnyListItems();
+}
+
+// ---- Actions: Tasks ----
+async function addTask() {
+  const input = document.getElementById('task-input');
+  const title = input.value.trim();
+  const target = document.getElementById('task-target').value;
+  if (!title) return;
+
+  try {
+    if (target === 'anylist' && anylistConnected) {
+      await fetch(`/api/anylist/lists/${encodeURIComponent(ANYLIST_TODO)}/items`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ item: title }),
+      });
+      toast('Added to AnyList Todo');
+    } else {
+      await fetch('/api/tasks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title }),
+      });
+      toast('Task created');
+    }
+    input.value = '';
+    await loadTasks();
+  } catch (err) { toast(err.message, true); }
+}
+
+async function completeTask(id) {
+  try {
+    await fetch(`/api/tasks/${id}/complete`, { method: 'PATCH' });
+    const t = jarvisTasks.find(t => t.id === id);
+    if (t) t.status = 'completed';
+    renderTasks();
+    toast('Task completed');
+  } catch (err) { toast(err.message, true); }
+}
+
+async function deleteTask(id) {
+  try {
+    await fetch(`/api/tasks/${id}`, { method: 'DELETE' });
+    jarvisTasks = jarvisTasks.filter(t => t.id !== id);
+    renderTasks();
+  } catch (err) { toast(err.message, true); }
+}
+
+async function toggleAnyListTodo(itemId) {
+  try {
+    await fetch(`/api/anylist/lists/${encodeURIComponent(ANYLIST_TODO)}/items/${itemId}/toggle`, { method: 'PATCH' });
+    const item = anylistTodoItems.find(i => i.id === itemId);
+    if (item) item.checked = !item.checked;
+    renderTasks();
+  } catch (err) { toast('Toggle failed', true); }
+}
+
+async function removeAnyListTodo(itemId) {
+  try {
+    await fetch(`/api/anylist/lists/${encodeURIComponent(ANYLIST_TODO)}/items/${itemId}`, { method: 'DELETE' });
+    anylistTodoItems = anylistTodoItems.filter(i => i.id !== itemId);
+    renderTasks();
+  } catch (err) { toast('Delete failed', true); }
+}
+
+// ---- Actions: Shopping (AnyList Home) ----
+async function addShopItem() {
+  const input = document.getElementById('shop-input');
+  const name = input.value.trim();
+  if (!name) return;
+
+  try {
+    if (anylistConnected) {
+      await fetch(`/api/anylist/lists/${encodeURIComponent(ANYLIST_HOME)}/items`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ item: name }),
+      });
+    } else {
+      // Fallback to local list
+      const lists = await fetch('/api/lists').then(r => r.json());
+      const shop = (lists.data || []).find(l => l.name === 'alışveriş');
+      if (shop) {
+        await fetch(`/api/lists/${shop.id}/items`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content: name }),
+        });
+      }
+    }
+    input.value = '';
+    toast('Item added');
+    await loadShopping();
+  } catch (err) { toast('Add failed', true); }
+}
+
+async function toggleShopItem(itemId) {
+  try {
+    await fetch(`/api/anylist/lists/${encodeURIComponent(ANYLIST_HOME)}/items/${itemId}/toggle`, { method: 'PATCH' });
+    const item = anylistHomeItems.find(i => i.id === itemId);
+    if (item) item.checked = !item.checked;
+    renderShopping();
+  } catch (err) { toast('Toggle failed', true); }
+}
+
+async function removeShopItem(itemId) {
+  try {
+    await fetch(`/api/anylist/lists/${encodeURIComponent(ANYLIST_HOME)}/items/${itemId}`, { method: 'DELETE' });
+    anylistHomeItems = anylistHomeItems.filter(i => i.id !== itemId);
+    renderShopping();
+  } catch (err) { toast('Delete failed', true); }
+}
+
+// Fallback local list actions
+async function toggleLocalItem(id) {
+  try {
+    await fetch(`/api/list-items/${id}/toggle`, { method: 'PATCH' });
+    await loadShopping();
+  } catch (err) { toast('Toggle failed', true); }
+}
+
+async function deleteLocalItem(id) {
+  try {
+    await fetch(`/api/list-items/${id}`, { method: 'DELETE' });
+    await loadShopping();
+  } catch (err) { toast('Delete failed', true); }
+}
+
+// ---- Actions: AnyList browser ----
+async function toggleAnyListItem(listName, itemId) {
+  try {
+    await fetch(`/api/anylist/lists/${encodeURIComponent(listName)}/items/${itemId}/toggle`, { method: 'PATCH' });
+    const list = anylistLists.find(l => l.name === listName);
+    if (list) {
+      const item = list.items.find(i => i.id === itemId);
+      if (item) item.checked = !item.checked;
+    }
+    renderAnyListTabs();
+    renderAnyListItems();
+  } catch (err) { toast('Toggle failed', true); }
+}
+
+async function removeAnyListItem(listName, itemId) {
+  try {
+    await fetch(`/api/anylist/lists/${encodeURIComponent(listName)}/items/${itemId}`, { method: 'DELETE' });
+    const list = anylistLists.find(l => l.name === listName);
+    if (list) list.items = list.items.filter(i => i.id !== itemId);
+    renderAnyListTabs();
+    renderAnyListItems();
+  } catch (err) { toast('Delete failed', true); }
+}
+
+async function addAnyListItem() {
+  if (!activeAnyListName || !anylistConnected) return toast('No list selected', true);
+  const input = document.getElementById('anylist-input');
+  const item = input.value.trim();
+  if (!item) return;
+  try {
+    await fetch(`/api/anylist/lists/${encodeURIComponent(activeAnyListName)}/items`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ item }),
+    });
+    input.value = '';
+    toast('Added to ' + activeAnyListName);
+    await loadAnyList();
+  } catch (err) { toast('Add failed', true); }
+}
+
+// ---- Keyboard shortcuts ----
+document.getElementById('task-input').addEventListener('keydown', e => { if (e.key === 'Enter') addTask(); });
+document.getElementById('shop-input').addEventListener('keydown', e => { if (e.key === 'Enter') addShopItem(); });
+document.getElementById('anylist-input').addEventListener('keydown', e => { if (e.key === 'Enter') addAnyListItem(); });
+
+// ---- Init ----
+loadAll();
+
+// Auto-refresh AnyList every 10s
+setInterval(() => {
+  if (anylistConnected) loadAnyList();
+}, 10_000);
+</script>
+</body>
+</html>
